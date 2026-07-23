@@ -1,0 +1,15 @@
+{% extends "dlux/form_base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Managed project{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h1 class="mb-4">Managed project</h1>
+    <form method="post" class="card card-body">
+        {% csrf_token %}
+        {{ form|crispy }}
+        <div><button class="btn btn-primary" type="submit">Save project</button></div>
+    </form>
+</div>
+{% endblock %}

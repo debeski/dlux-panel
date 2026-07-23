@@ -1,0 +1,12 @@
+{% extends "dlux/form_base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Batch update{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h1>Batch update</h1>
+    <p class="text-muted">Concurrency defaults to one and is capped at three. Unstarted members stop after the first failure unless continue-on-failure is selected.</p>
+    <form method="post" class="card card-body">{% csrf_token %}{{ form|crispy }}<div><button class="btn btn-primary" type="submit">Queue batch</button></div></form>
+</div>
+{% endblock %}

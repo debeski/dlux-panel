@@ -1,0 +1,52 @@
+{% extends "dlux/base.html" %}
+
+{% block title %}Fleet{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <h1 class="mb-1">Fleet</h1>
+            <p class="text-muted mb-0">Current state relayed by each project's DLUX runtime.</p>
+        </div>
+        <div class="d-flex gap-2">
+            {% if perms.fleet.run_fleet_batch %}<a class="btn btn-outline-primary" href="{% url 'fleet:batch_add' %}">Batch update</a>{% endif %}
+            {% if perms.fleet.add_managedproject %}<a class="btn btn-primary" href="{% url 'fleet:project_add' %}">Add project</a>{% endif %}
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Project</th>
+                    <th>Agent</th>
+                    <th>Versions</th>
+                    <th>Update</th>
+                    <th>Backup</th>
+                    <th>Observed</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for project in projects %}
+                <tr>
+                    <td><a href="{% url 'fleet:project_detail' project.pk %}">{{ project.name }}</a><div class="small text-muted">{{ project.environment }}</div></td>
+                    <td>
+                        {% if project.agent.is_online %}<span class="badge text-bg-success">Online</span>
+                        {% elif project.agent.revoked_at %}<span class="badge text-bg-danger">Revoked</span>
+                        {% elif project.agent %}<span class="badge text-bg-secondary">Offline</span>
+                        {% else %}<span class="badge text-bg-warning">Not enrolled</span>{% endif %}
+                    </td>
+                    <td>{{ project.latest_snapshot.versions.application|default:"—" }}<div class="small text-muted">DLUX {{ project.latest_snapshot.versions.dlux|default:"—" }}</div></td>
+                    <td>{{ project.latest_snapshot.update_state.active_status|default:"—" }}</td>
+                    <td>{{ project.latest_snapshot.backup_summary.status|default:"—" }}</td>
+                    <td>{{ project.latest_snapshot.observed_at|date:"Y-m-d H:i:s"|default:"—" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="text-center text-muted py-5">No managed projects are visible in your scope.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

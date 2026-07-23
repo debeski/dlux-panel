@@ -1,0 +1,14 @@
+{% extends "dlux/base.html" %}
+
+{% block title %}Enrollment token{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="card border-warning"><div class="card-body">
+        <h1 class="h4">One-use enrollment token for {{ project.name }}</h1>
+        <p>This value expires at {{ expires_at|date:"Y-m-d H:i:s T" }} and will not be shown again.</p>
+        <pre class="p-3 bg-body-tertiary text-wrap user-select-all">{{ token }}</pre>
+        <p class="mb-0">Set it as <code>COMPOSER_ENROLLMENT_TOKEN</code> for this project's agent. The control panel stores only its hash.</p>
+    </div></div>
+</div>
+{% endblock %}

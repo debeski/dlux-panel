@@ -1,0 +1,13 @@
+{% extends "dlux/base.html" %}
+
+{% block title %}{{ batch.name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h1>{{ batch.name }}</h1>
+    <p><span class="badge text-bg-secondary">{{ batch.state }}</span> · concurrency {{ batch.concurrency }} · {% if batch.continue_on_failure %}continue after failure{% else %}halt after first failure{% endif %}</p>
+    <div class="table-responsive"><table class="table"><thead><tr><th>#</th><th>Project</th><th>Operation</th><th>State</th></tr></thead><tbody>
+    {% for member in batch.members.all %}<tr><td>{{ member.position }}</td><td><a href="{% url 'fleet:project_detail' member.project.pk %}">{{ member.project.name }}</a></td><td>{{ member.operation.operation_id }}</td><td>{{ member.operation.state }}</td></tr>{% endfor %}
+    </tbody></table></div>
+</div>
+{% endblock %}

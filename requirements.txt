@@ -1,0 +1,10 @@
+django-lux[updater]==1.5.0
+django-cors-headers
+django-csp
+uvicorn[standard]
+psycopg2-binary
+redis
+django-redis
+celery
+django-celery-beat
+django-health-check==3.20.0

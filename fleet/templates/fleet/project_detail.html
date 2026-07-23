@@ -1,0 +1,71 @@
+{% extends "dlux/base.html" %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block title %}{{ project.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+        <div>
+            <h1 class="mb-1">{{ project.name }}</h1>
+            <p class="text-muted mb-0">{{ project.environment }}{% if project.base_url %} · <a href="{{ project.base_url }}">{{ project.base_url }}</a>{% endif %}</p>
+        </div>
+        {% if perms.fleet.change_managedproject %}<a class="btn btn-outline-secondary" href="{% url 'fleet:project_edit' project.pk %}">Edit</a>{% endif %}
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-lg-4">
+            <section class="card h-100"><div class="card-body">
+                <h2 class="h5">Composer agent</h2>
+                {% if project.agent %}
+                <p class="mb-2">{% if project.agent.is_online %}<span class="badge text-bg-success">Online</span>{% elif project.agent.revoked_at %}<span class="badge text-bg-danger">Revoked</span>{% else %}<span class="badge text-bg-secondary">Offline</span>{% endif %}</p>
+                <dl class="row small mb-3"><dt class="col-5">Agent ID</dt><dd class="col-7 text-break">{{ project.agent.pk }}</dd><dt class="col-5">Version</dt><dd class="col-7">{{ project.agent.agent_version|default:"—" }}</dd><dt class="col-5">Last seen</dt><dd class="col-7">{{ project.agent.last_seen_at|date:"Y-m-d H:i:s"|default:"Never" }}</dd></dl>
+                {% else %}<p class="text-muted">Not enrolled.</p>{% endif %}
+                {% if perms.fleet.manage_composer_agent %}
+                <div class="d-flex flex-wrap gap-2">
+                    <form method="post" action="{% url 'fleet:project_enrollment' project.pk %}">{% csrf_token %}<button class="btn btn-sm btn-primary" type="submit">Create enrollment token</button></form>
+                    {% if project.agent and not project.agent.revoked_at %}<form method="post" action="{% url 'fleet:project_rotate' project.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-primary" type="submit">Rotate credential</button></form><form method="post" action="{% url 'fleet:project_revoke' project.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-danger" type="submit">Revoke</button></form>{% endif %}
+                </div>
+                {% endif %}
+            </div></section>
+        </div>
+        <div class="col-lg-4">
+            <section class="card h-100"><div class="card-body">
+                <h2 class="h5">DLUX snapshot</h2>
+                {% if project.latest_snapshot %}
+                <dl class="row small mb-0"><dt class="col-5">Project version</dt><dd class="col-7">{{ project.latest_snapshot.versions.application|default:"—" }}</dd><dt class="col-5">DLUX version</dt><dd class="col-7">{{ project.latest_snapshot.versions.dlux|default:"—" }}</dd><dt class="col-5">Update</dt><dd class="col-7">{{ project.latest_snapshot.update_state.active_status|default:"—" }}</dd><dt class="col-5">Backup</dt><dd class="col-7">{{ project.latest_snapshot.backup_summary.status|default:"—" }}</dd><dt class="col-5">Database</dt><dd class="col-7">{{ project.latest_snapshot.health_summary.database|default:"—" }}</dd><dt class="col-5">Observed</dt><dd class="col-7">{{ project.latest_snapshot.observed_at|date:"Y-m-d H:i:s" }}</dd></dl>
+                {% if project.latest_snapshot.backup_summary.recent %}<h3 class="h6 mt-3">Recent backups</h3><ul class="small mb-0">{% for backup in project.latest_snapshot.backup_summary.recent %}<li>{{ backup.created_at }} · {{ backup.status }} · {% if backup.media_included %}full{% else %}data{% endif %}</li>{% endfor %}</ul>{% endif %}
+                {% else %}<p class="text-muted mb-0">No snapshot has been relayed.</p>{% endif %}
+            </div></section>
+        </div>
+        <div class="col-lg-4">
+            <section class="card h-100"><div class="card-body">
+                <h2 class="h5">Safe actions</h2>
+                {% if perms.fleet.run_image_update %}<form method="post" action="{% url 'fleet:project_update' project.pk %}" class="mb-3">{% csrf_token %}{{ update_form|crispy }}<button class="btn btn-primary" type="submit">Queue update</button></form>{% endif %}
+                {% if perms.fleet.create_project_backup %}<form method="post" action="{% url 'fleet:project_backup' project.pk %}" class="mb-3">{% csrf_token %}{{ backup_form|crispy }}<button class="btn btn-outline-primary" type="submit">Create backup</button></form>{% endif %}
+                {% if perms.fleet.restart_managed_project %}<form method="post" action="{% url 'fleet:project_restart' project.pk %}">{% csrf_token %}{{ restart_form|crispy }}<button class="btn btn-outline-primary" type="submit">Queue safe restart</button></form>{% endif %}
+            </div></section>
+        </div>
+    </div>
+
+    {% if user.is_superuser and perms.fleet.run_recovery_deploy %}
+    <section class="card border-danger mb-4"><div class="card-body">
+        <h2 class="h5 text-danger">Break-glass recovery deployment</h2>
+        <p class="small">This bypasses the normal DLUX backup gate. A reason and current-password step-up are mandatory, and the event is immutable.</p>
+        <form method="post" action="{% url 'fleet:project_recovery' project.pk %}">{% csrf_token %}{{ recovery_form|crispy }}<button class="btn btn-danger" type="submit">Queue audited recovery deployment</button></form>
+    </div></section>
+    {% endif %}
+
+    <section class="card"><div class="card-body">
+        <h2 class="h5">Operation history</h2>
+        <div class="table-responsive"><table class="table align-middle"><thead><tr><th>Created</th><th>Action</th><th>State</th><th>Actor</th><th>Latest detail</th><th></th></tr></thead><tbody>
+        {% for operation in operations %}
+        <tr data-operation-url="{% url 'fleet:operation_status' operation.pk %}"><td>{{ operation.created_at|date:"Y-m-d H:i:s" }}</td><td>{{ operation.action }}</td><td data-operation-state>{{ operation.state }}</td><td>{{ operation.actor_display|default:"Local DLUX" }}</td><td><pre class="small mb-0 text-wrap" data-operation-result>{{ operation.result|default:"—" }}</pre></td><td>{% if operation.state == "queued" or operation.state == "delivered" %}{% if perms.fleet.change_fleetoperation %}<form method="post" action="{% url 'fleet:operation_cancel' operation.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-danger" type="submit">Cancel</button></form>{% endif %}{% endif %}</td></tr>
+        {% empty %}<tr><td colspan="6" class="text-muted text-center py-4">No operations yet.</td></tr>{% endfor %}
+        </tbody></table></div>
+    </div></section>
+</div>
+{% endblock %}
+
+{% block extra_head %}<script src="{% static 'fleet/fleet.js' %}" defer></script>{% endblock %}
