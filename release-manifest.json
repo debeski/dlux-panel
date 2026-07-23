@@ -7,5 +7,5 @@
     "Monotonic events, snapshot replacement, controlled batches, and two-phase rotation/revocation.",
     "Central backup creation, audited recovery deployment, and 90-day sanitized-log retention."
   ],
-  "release_url": "https://github.com/DEVGREIDC/dlux-panel/releases/tag/v0.1.0"
+  "release_url": "https://github.com/DEVGREIDC/dlux-control-panel/releases/tag/v0.1.0"
 }
