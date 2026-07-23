@@ -1,11 +1,9 @@
 {
   "schema_version": 1,
-  "version": "0.1.0",
-  "summary": "Initial control-plane foundation: scoped fleet UI, hashed agent enrollment, ASGI long polling, controlled batches, credential rotation/revocation, central backups, and audited recovery.",
+  "version": "0.1.1",
+  "summary": "Pairing-First Enrollment UX Support.",
   "highlights": [
-    "Scoped fleet models/UI with hashed enrollment and bearer credentials over Uvicorn ASGI long polling.",
-    "Monotonic events, snapshot replacement, controlled batches, and two-phase rotation/revocation.",
-    "Central backup creation, audited recovery deployment, and 90-day sanitized-log retention."
+    "Pairing-First Enrollment UX Support"
   ],
-  "release_url": "https://github.com/debeski/dlux-control-panel/releases/tag/v0.1.0"
+  "release_url": "https://github.com/debeski/dlux-control-panel/releases/tag/v0.1.1"
 }
