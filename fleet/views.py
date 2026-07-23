@@ -193,7 +193,12 @@ class EnrollmentTokenView(ScopedFleetMixin, View):
         response = render(
             request,
             "fleet/enrollment_token.html",
-            {"project": project, "token": token, "expires_at": record.expires_at},
+            {
+                "project": project,
+                "token": token,
+                "expires_at": record.expires_at,
+                "control_url": request.build_absolute_uri("/").rstrip("/"),
+            },
         )
         response["Cache-Control"] = "no-store"
         return response

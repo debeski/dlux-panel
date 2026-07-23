@@ -7,8 +7,20 @@
     <div class="card border-warning"><div class="card-body">
         <h1 class="h4">One-use enrollment token for {{ project.name }}</h1>
         <p>This value expires at {{ expires_at|date:"Y-m-d H:i:s T" }} and will not be shown again.</p>
+
+        <label class="form-label fw-semibold mb-1">Control panel URL</label>
+        <pre class="p-3 bg-body-tertiary text-wrap user-select-all">{{ control_url }}</pre>
+
+        <label class="form-label fw-semibold mb-1">Pairing token</label>
         <pre class="p-3 bg-body-tertiary text-wrap user-select-all">{{ token }}</pre>
-        <p class="mb-0">Set it as <code>COMPOSER_ENROLLMENT_TOKEN</code> for this project's agent. The control panel stores only its hash.</p>
+
+        <p class="mb-1"><strong>Recommended — pair from the app's UI (no redeploy):</strong>
+           in the target app open <em>DjangoLux → System Settings → Control Panel</em>,
+           paste the URL and token above, and save. The agent enrolls over its local
+           bridge and the tile turns <span class="badge text-bg-success">Connected</span>.</p>
+        <p class="mb-0 text-muted small">Headless fallback: set <code>COMPOSER_CONTROL_URL</code>
+           and <code>COMPOSER_ENROLLMENT_TOKEN</code> for the <code>composer-agent</code> service
+           before first boot. The control panel stores only the token's hash.</p>
     </div></div>
 </div>
 {% endblock %}
