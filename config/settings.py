@@ -204,3 +204,7 @@ CELERY_BEAT_SCHEDULE["fleet-prune-operation-logs"] = {
     "task": "fleet.tasks.prune_operation_logs",
     "schedule": 86400.0,
 }
+CELERY_BEAT_SCHEDULE["fleet-expire-stale-operations"] = {
+    "task": "fleet.tasks.expire_stale_operations",
+    "schedule": 120.0,
+}

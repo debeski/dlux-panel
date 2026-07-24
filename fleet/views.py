@@ -1,3 +1,4 @@
+import json
 from urllib.parse import urlparse
 
 from django.conf import settings
@@ -21,6 +22,8 @@ from dlux.utils import (
     log_user_action,
     setup_filter_helper,
 )
+from dlux.views.sections import DynamicModalManagerView
+from dlux.translations import get_strings
 
 from .filters import ManagedProjectFilter
 from .forms import (
@@ -41,9 +44,38 @@ from .services import (
     revoke_agent,
     scoped_projects_for_user,
 )
+from .layouts import get_fleet_layout
 from .tables import ManagedProjectTable
 
 ACTIVE_OPERATION_STATES = ("queued", "delivered", "accepted", "running")
+
+# Phases that mean the agent is deliberately offline (recreating web/celery/
+# itself), so an unresponsive agent here is expected, not a fault.
+RECREATE_PHASES = ("awaiting_dlux", "composer_deploy")
+
+
+def _operation_live_status(operation):
+    """The moving parts the panel needs to tell 'progressing' from 'stuck':
+    latest phase, seconds since the last event, whether it is past deadline,
+    and the agent's own reachability."""
+    from django.utils import timezone
+
+    now = timezone.now()
+    latest = operation.events.order_by("-sequence").first()
+    phase = latest.phase if latest else ""
+    last_event_at = latest.observed_at if latest else operation.created_for_agent_at
+    agent = getattr(operation.project, "agent", None)
+    return {
+        "state": operation.state,
+        "phase": phase,
+        "last_event_at": utc_iso(last_event_at) if last_event_at else "",
+        "age_seconds": int((now - last_event_at).total_seconds()) if last_event_at else 0,
+        "overdue": operation.state in ACTIVE_OPERATION_STATES and operation.deadline_at < now,
+        "deadline_at": utc_iso(operation.deadline_at),
+        "recreate_expected": phase in RECREATE_PHASES,
+        "agent_online": bool(agent and agent.is_online),
+        "agent_last_seen": utc_iso(agent.last_seen_at) if agent and agent.last_seen_at else "",
+    }
 
 
 def _control_panel_url(request):
@@ -107,6 +139,18 @@ class FleetOverviewView(
             .order_by("-created_at")[:20]
         )
         context["open_project"] = self._deep_linked_project()
+
+        layout = get_fleet_layout(self.request)
+        context["fleet_layout"] = layout
+        if layout == "cards":
+            # Cards reuse the table's context-menu actions: the dlux context menu
+            # binds to any [data-dlux-context] element, so each card carries the
+            # same permission-gated action payload the table rows would.
+            action_table = ManagedProjectTable([])
+            context["cards"] = [
+                {"project": project, "actions": json.dumps(action_table.get_dlux_row_actions(project, []))}
+                for project in context["filter"].qs
+            ]
         return context
 
     def _deep_linked_project(self):
@@ -119,6 +163,13 @@ class FleetOverviewView(
             return self.project_queryset().filter(pk=requested).first()
         except (ValidationError, ValueError):
             return None
+
+
+class ManagedProjectModalView(DynamicModalManagerView):
+    """Add/edit a project as a form-only dynamic modal — no embedded record table."""
+
+    model = ManagedProject
+    show_table = False
 
 
 class ManagedProjectDetailView(ScopedFleetMixin, PermissionRequiredMixin, DetailView):
@@ -147,9 +198,8 @@ class ProjectActionView(ScopedFleetMixin, View):
     action = ""
     permission_required = ""
     form_class = None
-    title = ""
-    description = ""
-    submit_label = "Queue"
+    desc_key = ""
+    submit_key = ""
     submit_class = "btn btn-primary"
 
     def form_kwargs(self, request):
@@ -163,6 +213,7 @@ class ProjectActionView(ScopedFleetMixin, View):
             raise PermissionDenied
 
     def render_form(self, request, project, form):
+        strings = get_strings()
         return _modal(
             request,
             "fleet/partials/action_form.html",
@@ -170,8 +221,8 @@ class ProjectActionView(ScopedFleetMixin, View):
                 "project": project,
                 "form": form,
                 "action_url": request.path,
-                "description": self.description,
-                "submit_label": self.submit_label,
+                "description": strings.get(self.desc_key, ""),
+                "submit_label": strings.get(self.submit_key, ""),
                 "submit_class": self.submit_class,
             },
         )
@@ -191,7 +242,9 @@ class ProjectActionView(ScopedFleetMixin, View):
             instance=operation,
             details={"action": self.action, "project": str(project.pk)},
         )
-        return f"Queued {self.action} as {operation.operation_id}."
+        return get_strings().get("fleet_msg_queued", "Queued {action} as {operation}.").format(
+            action=self.action, operation=operation.operation_id
+        )
 
     def post(self, request, pk):
         self.check(request)
@@ -213,35 +266,32 @@ class ProjectUpdateActionView(ProjectActionView):
     action = "dlux.image_update"
     permission_required = "fleet.run_image_update"
     form_class = ImageUpdateForm
-    description = "Queues a DLUX image update through the project's own update queue."
-    submit_label = "Queue update"
+    desc_key = "fleet_desc_update"
+    submit_key = "fleet_submit_update"
 
 
 class ProjectBackupActionView(ProjectActionView):
     action = "dlux.backup.create"
     permission_required = "fleet.create_project_backup"
     form_class = BackupCreateForm
-    description = "The project-local DLUX backup engine owns the artifact."
-    submit_label = "Create backup"
+    desc_key = "fleet_desc_backup"
+    submit_key = "fleet_submit_backup"
 
 
 class ProjectRestartActionView(ProjectActionView):
     action = "composer.restart"
     permission_required = "fleet.restart_managed_project"
     form_class = RestartForm
-    description = "Stateful services stay protected by the generated allowlist."
-    submit_label = "Queue restart"
+    desc_key = "fleet_desc_restart"
+    submit_key = "fleet_submit_restart"
 
 
 class ProjectRecoveryActionView(ProjectActionView):
     action = "composer.recovery_deploy"
     permission_required = "fleet.run_recovery_deploy"
     form_class = RecoveryDeployForm
-    description = (
-        "This bypasses the normal DLUX backup gate. A reason and current-password "
-        "step-up are mandatory, and the recorded event is immutable."
-    )
-    submit_label = "Queue audited recovery"
+    desc_key = "fleet_desc_recovery"
+    submit_key = "fleet_submit_recovery"
     submit_class = "btn btn-danger"
 
     def form_kwargs(self, request):
@@ -273,7 +323,10 @@ class ProjectRecoveryActionView(ProjectActionView):
             instance=operation,
             details={"reason": reason, "project": str(project.pk)},
         )
-        return f"Break-glass deployment {operation.operation_id} was queued and audited."
+        return get_strings().get(
+            "fleet_msg_recovery_queued",
+            "Break-glass deployment {operation} was queued and audited.",
+        ).format(operation=operation.operation_id)
 
 
 class EnrollmentTokenView(ScopedFleetMixin, View):
@@ -320,9 +373,8 @@ class EnrollmentTokenView(ScopedFleetMixin, View):
 class AgentConfirmActionView(ScopedFleetMixin, View):
     """Confirm-only agent operations (no form fields), rendered as a modal."""
 
-    title = ""
-    description = ""
-    submit_label = "Confirm"
+    desc_key = ""
+    submit_key = ""
     submit_class = "btn btn-primary"
 
     def check(self, request):
@@ -331,6 +383,7 @@ class AgentConfirmActionView(ScopedFleetMixin, View):
 
     def get(self, request, pk):
         self.check(request)
+        strings = get_strings()
         project = get_object_or_404(self.project_queryset(), pk=pk)
         return _modal(
             request,
@@ -338,19 +391,16 @@ class AgentConfirmActionView(ScopedFleetMixin, View):
             {
                 "project": project,
                 "action_url": request.path,
-                "description": self.description,
-                "submit_label": self.submit_label,
+                "description": strings.get(self.desc_key, ""),
+                "submit_label": strings.get(self.submit_key, ""),
                 "submit_class": self.submit_class,
             },
         )
 
 
 class AgentRevokeView(AgentConfirmActionView):
-    description = (
-        "Revocation blocks central traffic immediately. The project keeps its own "
-        "local DLUX updates."
-    )
-    submit_label = "Revoke agent"
+    desc_key = "fleet_desc_revoke"
+    submit_key = "fleet_submit_revoke"
     submit_class = "btn btn-danger"
 
     def post(self, request, pk):
@@ -360,7 +410,10 @@ class AgentRevokeView(AgentConfirmActionView):
         if agent:
             revoke_agent(agent)
             log_audit_event(request, "agent_revoked", "REVOKE", instance=project)
-            message = "Agent credential revoked immediately; local DLUX updates remain available."
+            message = get_strings().get(
+                "fleet_msg_revoked",
+                "Agent credential revoked immediately; local DLUX updates remain available.",
+            )
             if _wants_json(request):
                 return _modal_done(request, message, messages.WARNING)
             messages.warning(request, message)
@@ -368,18 +421,16 @@ class AgentRevokeView(AgentConfirmActionView):
 
 
 class AgentRotateView(AgentConfirmActionView):
-    description = (
-        "Rotation stages a pending credential; the agent confirms with the new "
-        "secret before the old one is revoked."
-    )
-    submit_label = "Rotate credential"
+    desc_key = "fleet_desc_rotate"
+    submit_key = "fleet_submit_rotate"
 
     def post(self, request, pk):
         self.check(request)
+        strings = get_strings()
         project = get_object_or_404(self.project_queryset(), pk=pk)
         agent = getattr(project, "agent", None)
         if not agent or agent.revoked_at:
-            message = "An active enrolled agent is required."
+            message = strings.get("fleet_msg_rotate_needs_agent", "An active enrolled agent is required.")
             if _wants_json(request):
                 return JsonResponse({"error": message}, status=400)
             messages.error(request, message)
@@ -388,7 +439,9 @@ class AgentRotateView(AgentConfirmActionView):
             project, "agent.rotate_credentials", {}, request.user, deadline_minutes=15
         )
         log_audit_event(request, "agent_rotation", "ROTATE", instance=operation)
-        message = f"Credential rotation {operation.operation_id} was queued."
+        message = strings.get(
+            "fleet_msg_rotate_queued", "Credential rotation {operation} was queued."
+        ).format(operation=operation.operation_id)
         if _wants_json(request):
             return _modal_done(request, message)
         messages.success(request, message)
@@ -436,7 +489,8 @@ class FleetBatchCreateView(ScopedFleetMixin, PermissionRequiredMixin, TemplateVi
         )
         log_user_action(request, "QUEUE", instance=batch, details={"member_count": batch.members.count()})
         if _wants_json(request):
-            return _modal_done(request, f"Batch {batch.name} was queued.")
+            message = get_strings().get("fleet_msg_batch_queued", "Batch {name} was queued.").format(name=batch.name)
+            return _modal_done(request, message)
         return redirect("fleet:batch_detail", pk=batch.pk)
 
 
@@ -474,6 +528,7 @@ class OperationStatusView(ScopedFleetMixin, View):
                 "operation_id": str(operation.operation_id),
                 "state": operation.state,
                 "result": operation.result,
+                "status": _operation_live_status(operation),
                 "events": [
                     {
                         "sequence": event.sequence,
@@ -501,7 +556,8 @@ class ActiveOperationsView(ScopedFleetMixin, View):
                 project__in=self.project_queryset(),
                 state__in=ACTIVE_OPERATION_STATES,
             )
-            .select_related("project")
+            .select_related("project", "project__agent")
+            .prefetch_related("events")
             .order_by("-created_at")[:20]
         )
         return JsonResponse(
@@ -514,8 +570,8 @@ class ActiveOperationsView(ScopedFleetMixin, View):
                             "fleet:project_detail", args=[operation.project_id]
                         ),
                         "action": operation.action,
-                        "state": operation.state,
                         "created_at": utc_iso(operation.created_at),
+                        **_operation_live_status(operation),
                     }
                     for operation in operations
                 ]
@@ -540,7 +596,8 @@ class OperationCancelView(ScopedFleetMixin, View):
             messages.error(request, message)
         else:
             log_user_action(request, "CANCEL", instance=operation)
+            message = get_strings().get("fleet_msg_op_cancelled", "Operation cancelled.")
             if _wants_json(request):
-                return _modal_done(request, "Operation cancelled.")
-            messages.success(request, "Operation cancelled.")
+                return _modal_done(request, message)
+            messages.success(request, message)
         return redirect("fleet:overview")

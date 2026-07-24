@@ -8,7 +8,7 @@
     <form method="post" action="{{ action_url }}">
         {% csrf_token %}
         <div class="dlux-modal-form-actions d-flex justify-content-end gap-2">
-            <button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">{{ DLUX_STRINGS.fleet_cancel|default:'Cancel' }}</button>
             <button type="submit" class="{{ submit_class }} rounded-pill">{{ submit_label }}</button>
         </div>
     </form>

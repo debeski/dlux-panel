@@ -13,7 +13,7 @@
 <div class="modal-body p-4">
     <div class="table-responsive">
         <table class="table table-sm align-middle mb-0">
-            <thead><tr><th>#</th><th>Project</th><th>Operation</th><th>State</th></tr></thead>
+            <thead><tr><th>#</th><th>{{ DLUX_STRINGS.fleet_batch_member|default:'Project' }}</th><th>{{ DLUX_STRINGS.fleet_batch_operation|default:'Operation' }}</th><th>{{ DLUX_STRINGS.fleet_op_state|default:'State' }}</th></tr></thead>
             <tbody>
             {% for member in batch.members.all %}
                 <tr>

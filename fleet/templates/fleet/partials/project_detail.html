@@ -9,54 +9,55 @@
 <div class="modal-body p-4">
     <div class="row g-3 mb-4">
         <div class="col-md-6">
-            <h6 class="text-uppercase small text-muted">Composer agent</h6>
+            <h6 class="text-uppercase small text-muted">{{ DLUX_STRINGS.fleet_composer_agent|default:'Composer agent' }}</h6>
             {% if project.agent %}
             <p class="mb-2">
-                {% if project.agent.is_online %}<span class="badge text-bg-success">Online</span>
-                {% elif project.agent.revoked_at %}<span class="badge text-bg-danger">Revoked</span>
-                {% else %}<span class="badge text-bg-secondary">Offline</span>{% endif %}
+                {% if project.agent.is_online %}<span class="badge text-bg-success">{{ DLUX_STRINGS.fleet_agent_online|default:'Online' }}</span>
+                {% elif project.agent.revoked_at %}<span class="badge text-bg-danger">{{ DLUX_STRINGS.fleet_agent_revoked|default:'Revoked' }}</span>
+                {% else %}<span class="badge text-bg-secondary">{{ DLUX_STRINGS.fleet_agent_offline|default:'Offline' }}</span>{% endif %}
             </p>
             <dl class="row small mb-0">
-                <dt class="col-5">Agent ID</dt><dd class="col-7 text-break font-monospace">{{ project.agent.pk }}</dd>
-                <dt class="col-5">Version</dt><dd class="col-7">{{ project.agent.agent_version|default:"—" }}</dd>
-                <dt class="col-5">Last seen</dt><dd class="col-7">{{ project.agent.last_seen_at|date:"Y-m-d H:i:s"|default:"Never" }}</dd>
+                <dt class="col-5">{{ DLUX_STRINGS.fleet_agent_id|default:'Agent ID' }}</dt><dd class="col-7 text-break font-monospace">{{ project.agent.pk }}</dd>
+                <dt class="col-5">{{ DLUX_STRINGS.fleet_agent_version|default:'Version' }}</dt><dd class="col-7">{{ project.agent.agent_version|default:"—" }}</dd>
+                <dt class="col-5">{{ DLUX_STRINGS.fleet_last_seen|default:'Last seen' }}</dt><dd class="col-7">{{ project.agent.last_seen_at|date:"Y-m-d H:i:s"|default:DLUX_STRINGS.fleet_never|default:"Never" }}</dd>
             </dl>
             {% else %}
-            <p class="text-muted small mb-0">Not enrolled. Use the row's <em>Enrollment token</em> action.</p>
+            <p class="text-muted small mb-0">{{ DLUX_STRINGS.fleet_not_enrolled_hint|default:"Not enrolled. Use the row's Enrollment token action." }}</p>
             {% endif %}
         </div>
         <div class="col-md-6">
-            <h6 class="text-uppercase small text-muted">DLUX snapshot</h6>
+            <h6 class="text-uppercase small text-muted">{{ DLUX_STRINGS.fleet_dlux_snapshot|default:'DLUX snapshot' }}</h6>
             {% if project.latest_snapshot %}
             <dl class="row small mb-0">
-                <dt class="col-5">Project version</dt><dd class="col-7">{{ project.latest_snapshot.versions.application|default:"—" }}</dd>
-                <dt class="col-5">DLUX version</dt><dd class="col-7">{{ project.latest_snapshot.versions.dlux|default:"—" }}</dd>
-                <dt class="col-5">Update</dt><dd class="col-7">{{ project.latest_snapshot.update_state.active_status|default:"—" }}</dd>
-                <dt class="col-5">Backup</dt><dd class="col-7">{{ project.latest_snapshot.backup_summary.status|default:"—" }}</dd>
-                <dt class="col-5">Database</dt><dd class="col-7">{{ project.latest_snapshot.health_summary.database|default:"—" }}</dd>
-                <dt class="col-5">Observed</dt><dd class="col-7">{{ project.latest_snapshot.observed_at|date:"Y-m-d H:i:s" }}</dd>
+                <dt class="col-5">{{ DLUX_STRINGS.fleet_project_version|default:'Project version' }}</dt><dd class="col-7">{{ project.latest_snapshot.versions.application|default:"—" }}</dd>
+                <dt class="col-5">{{ DLUX_STRINGS.fleet_dlux_version|default:'DLUX version' }}</dt><dd class="col-7">{{ project.latest_snapshot.versions.dlux|default:"—" }}</dd>
+                <dt class="col-5">{{ DLUX_STRINGS.fleet_update_state|default:'Update' }}</dt><dd class="col-7">{{ project.latest_snapshot.update_state.active_status|default:"—" }}</dd>
+                <dt class="col-5">{{ DLUX_STRINGS.fleet_backup_state|default:'Backup' }}</dt><dd class="col-7">{{ project.latest_snapshot.backup_summary.status|default:"—" }}</dd>
+                <dt class="col-5">{{ DLUX_STRINGS.fleet_database|default:'Database' }}</dt><dd class="col-7">{{ project.latest_snapshot.health_summary.database|default:"—" }}</dd>
+                <dt class="col-5">{{ DLUX_STRINGS.fleet_observed|default:'Observed' }}</dt><dd class="col-7">{{ project.latest_snapshot.observed_at|date:"Y-m-d H:i:s" }} <span class="text-muted">({{ project.latest_snapshot.observed_at|timesince }})</span></dd>
             </dl>
             {% else %}
-            <p class="text-muted small mb-0">No snapshot has been relayed.</p>
+            <p class="text-muted small mb-0">{{ DLUX_STRINGS.fleet_no_snapshot|default:'No snapshot has been relayed.' }}</p>
             {% endif %}
         </div>
     </div>
 
-    <h6 class="text-uppercase small text-muted">Operation history</h6>
+    <h6 class="text-uppercase small text-muted">{{ DLUX_STRINGS.fleet_operation_history|default:'Operation history' }}</h6>
     <div class="table-responsive">
         <table class="table table-sm align-middle mb-0">
-            <thead><tr><th>Created</th><th>Action</th><th>State</th><th>Actor</th><th>Latest detail</th></tr></thead>
+            <thead><tr><th>{{ DLUX_STRINGS.fleet_op_created|default:'Created' }}</th><th>{{ DLUX_STRINGS.fleet_op_action|default:'Action' }}</th><th>{{ DLUX_STRINGS.fleet_op_state|default:'State' }}</th><th>{{ DLUX_STRINGS.fleet_op_phase|default:'Phase' }}</th><th>{{ DLUX_STRINGS.fleet_op_actor|default:'Actor' }}</th><th>{{ DLUX_STRINGS.fleet_op_detail|default:'Latest detail' }}</th></tr></thead>
             <tbody>
             {% for operation in operations %}
                 <tr data-operation-url="{% url 'fleet:operation_status' operation.pk %}">
                     <td class="text-nowrap small">{{ operation.created_at|date:"Y-m-d H:i:s" }}</td>
                     <td class="small">{{ operation.action }}</td>
                     <td class="small" data-operation-state>{{ operation.state }}</td>
-                    <td class="small">{{ operation.actor_display|default:"Local DLUX" }}</td>
+                    <td class="small text-muted" data-operation-phase></td>
+                    <td class="small">{{ operation.actor_display|default:DLUX_STRINGS.fleet_op_local|default:"Local DLUX" }}</td>
                     <td><pre class="small mb-0 text-wrap" data-operation-result>{{ operation.result|default:"—" }}</pre></td>
                 </tr>
             {% empty %}
-                <tr><td colspan="5" class="text-muted text-center py-4">No operations yet.</td></tr>
+                <tr><td colspan="6" class="text-muted text-center py-4">{{ DLUX_STRINGS.fleet_no_operations|default:'No operations yet.' }}</td></tr>
             {% endfor %}
             </tbody>
         </table>

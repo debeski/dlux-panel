@@ -1,10 +1,10 @@
-name: dlux_control
+name: dlux-panel
 
 x-environment:
   # Database settings
   &de
   WEB_IMAGE: "${WEB_IMAGE:-debeski/dlux-panel:latest}"
-  POSTGRES_DB: "${POSTGRES_DB:-dlux_control_db}"
+  POSTGRES_DB: "${POSTGRES_DB:-dlux_panel_db}"
   POSTGRES_PORT: "5432"
   POSTGRES_HOST: "db"
   # Redis / Celery
@@ -46,7 +46,7 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - dlux_control_internal
+      - internal
 
   redis:
     image: redis:7
@@ -60,7 +60,7 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - dlux_control_internal
+      - internal
 
   smtp-relay:
     image: ${WEB_IMAGE:-debeski/dlux-panel:latest}
@@ -87,8 +87,8 @@ services:
       retries: 3
       start_period: 5s
     networks:
-      - dlux_control_net
-      - dlux_control_internal
+      - egress
+      - internal
 
   # DjangoLux updater start
   dlux-updater:
@@ -119,8 +119,8 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - dlux_control_internal
-      - dlux_update_egress
+      - internal
+      - egress
   # DjangoLux updater end
 
   # ── Reverse proxy ──────────────────────────────────────────────────────────
@@ -164,8 +164,8 @@ services:
   #     retries: 3
   #     start_period: 10s
   #   networks:
-  #     - dlux_control_net
-  #     - dlux_control_internal
+  #     - frontend
+  #     - internal
 
   # caddy (active): plain HTTP on :80 with auto_https off (see .proxy/Caddyfile),
   # so the app sits behind your own TLS terminator or is used in local dev. The
@@ -200,8 +200,8 @@ services:
       retries: 3
       start_period: 10s
     networks:
-      - dlux_control_net
-      - dlux_control_internal
+      - frontend
+      - internal
 
   web:
     image: ${WEB_IMAGE:-debeski/dlux-panel:latest}
@@ -247,7 +247,7 @@ services:
       dlux-updater:
         condition: service_healthy
     networks:
-      - dlux_control_internal
+      - internal
 
   celery:
     image: ${WEB_IMAGE:-debeski/dlux-panel:latest}
@@ -279,7 +279,7 @@ services:
       dlux-updater:
         condition: service_healthy
     networks:
-      - dlux_control_internal
+      - internal
 
   pgadmin:
     image: dpage/pgadmin4:latest
@@ -298,7 +298,7 @@ services:
       db:
         condition: service_healthy
     networks:
-      - dlux_control_internal
+      - internal
 
   db-backup:
     image: postgres:17
@@ -339,7 +339,7 @@ services:
       db:
         condition: service_healthy
     networks:
-      - dlux_control_internal
+      - internal
 
   # DjangoLux Composer agent start
   # Least-privilege Docker API gateway. composer-agent talks to this instead of
@@ -365,7 +365,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
-      - dlux_control_docker_proxy
+      - docker_proxy
 
   # One outbound-only deployment agent per project. DLUX remains responsible for
   # backup, maintenance, monitoring, and durable application update state; the
@@ -416,8 +416,8 @@ services:
       docker-socket-proxy:
         condition: service_started
     networks:
-      - dlux_update_egress
-      - dlux_control_docker_proxy
+      - egress
+      - docker_proxy
   # DjangoLux Composer agent end
 
 volumes:
@@ -431,12 +431,19 @@ volumes:
   caddy_config:
 
 networks:
-  dlux_control_net:
+  # Published ingress only (caddy). Bridge so the host can reach the app and
+  # Caddy can reach Let's Encrypt (ACME) for automatic HTTPS.
+  frontend:
     driver: bridge
-  dlux_control_internal:
+  # Outbound internet for the narrow set of services that need it: smtp-relay
+  # (→ your SMTP provider), dlux-updater (→ PyPI), composer-agent (→ registry).
+  # Separate from `frontend` so the internet-facing proxy shares no network with
+  # them; nothing may sit on both.
+  egress:
+    driver: bridge
+  # Inter-service traffic with NO internet access — db, redis, web, celery, …
+  internal:
     internal: true
-  dlux_update_egress:
-    driver: bridge
   # Isolated path from composer-agent to the docker-socket-proxy only.
-  dlux_control_docker_proxy:
+  docker_proxy:
     internal: true

@@ -3,6 +3,7 @@ from django.urls import reverse
 from django.utils.html import format_html
 
 from dlux.tables import DluxTable
+from dlux.translations import get_strings
 
 from .models import ManagedProject
 
@@ -25,6 +26,22 @@ class ManagedProjectTable(DluxTable):
         order_by = ("name",)
         dlux_actions = True
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Column headers are set at class-definition time, but the active
+        # language is per-request; relabel them here so Arabic actually applies.
+        self.strings = get_strings()
+        headers = {
+            "name": "fleet_col_project",
+            "agent": "fleet_col_agent",
+            "versions": "fleet_col_versions",
+            "update_state": "fleet_col_update",
+            "backup_state": "fleet_col_backup",
+            "observed": "fleet_col_observed",
+        }
+        for column, key in headers.items():
+            self.columns[column].column.verbose_name = self.strings.get(key, self.columns[column].column.verbose_name)
+
     def render_name(self, record):
         return format_html(
             '<span class="fw-semibold">{}</span><div class="small text-muted">{}</div>',
@@ -33,14 +50,15 @@ class ManagedProjectTable(DluxTable):
         )
 
     def render_agent(self, record):
+        s = self.strings
         agent = getattr(record, "agent", None)
         if agent is None:
-            return _badge("text-bg-warning", "Not enrolled")
+            return _badge("text-bg-warning", s.get("fleet_agent_unenrolled", "Not enrolled"))
         if agent.revoked_at:
-            return _badge("text-bg-danger", "Revoked")
+            return _badge("text-bg-danger", s.get("fleet_agent_revoked", "Revoked"))
         if agent.is_online:
-            return _badge("text-bg-success", "Online")
-        return _badge("text-bg-secondary", "Offline")
+            return _badge("text-bg-success", s.get("fleet_agent_online", "Online"))
+        return _badge("text-bg-secondary", s.get("fleet_agent_offline", "Offline"))
 
     def render_versions(self, record):
         snapshot = getattr(record, "latest_snapshot", None)
@@ -86,13 +104,14 @@ class ManagedProjectTable(DluxTable):
     def get_dlux_row_actions(self, record, base_actions):
         """Every project operation is reachable from the row's context menu, each
         opening a Dlux dynamic modal. Nothing here navigates away from the page."""
+        s = self.strings
         name = record.name
         agent = getattr(record, "agent", None)
         agent_active = bool(agent and not agent.revoked_at)
 
         actions = [
             self._modal_action(
-                "View",
+                s.get("fleet_action_view", "View"),
                 "bi bi-eye",
                 reverse("fleet:project_detail", args=[record.pk]),
                 name,
@@ -100,40 +119,40 @@ class ManagedProjectTable(DluxTable):
                 dblclick=True,
             ),
             self._modal_action(
-                "Edit",
+                s.get("fleet_action_edit", "Edit"),
                 "bi bi-pencil",
-                reverse("modal_manager", args=["fleet", "ManagedProject", record.pk]),
-                f"Edit {name}",
+                reverse("fleet:project_modal_edit", args=[record.pk]),
+                name,
                 permissions=["fleet.change_managedproject"],
             ),
             {"type": "divider"},
             self._modal_action(
-                "Queue update",
+                s.get("fleet_action_update", "Queue update"),
                 "bi bi-arrow-down-circle",
                 reverse("fleet:project_update", args=[record.pk]),
-                f"Update {name}",
+                name,
                 permissions=["fleet.run_image_update"],
             ),
             self._modal_action(
-                "Create backup",
+                s.get("fleet_action_backup", "Create backup"),
                 "bi bi-archive",
                 reverse("fleet:project_backup", args=[record.pk]),
-                f"Back up {name}",
+                name,
                 permissions=["fleet.create_project_backup"],
             ),
             self._modal_action(
-                "Safe restart",
+                s.get("fleet_action_restart", "Safe restart"),
                 "bi bi-arrow-repeat",
                 reverse("fleet:project_restart", args=[record.pk]),
-                f"Restart {name}",
+                name,
                 permissions=["fleet.restart_managed_project"],
             ),
             {"type": "divider"},
             self._modal_action(
-                "Enrollment token",
+                s.get("fleet_action_enroll", "Enrollment token"),
                 "bi bi-key",
                 reverse("fleet:project_enrollment", args=[record.pk]),
-                f"Enroll {name}",
+                name,
                 permissions=["fleet.manage_composer_agent"],
             ),
         ]
@@ -141,17 +160,17 @@ class ManagedProjectTable(DluxTable):
         if agent_active:
             actions += [
                 self._modal_action(
-                    "Rotate credential",
+                    s.get("fleet_action_rotate", "Rotate credential"),
                     "bi bi-shuffle",
                     reverse("fleet:project_rotate", args=[record.pk]),
-                    f"Rotate {name}",
+                    name,
                     permissions=["fleet.manage_composer_agent"],
                 ),
                 self._modal_action(
-                    "Revoke agent",
+                    s.get("fleet_action_revoke", "Revoke agent"),
                     "bi bi-slash-circle",
                     reverse("fleet:project_revoke", args=[record.pk]),
-                    f"Revoke {name}",
+                    name,
                     permissions=["fleet.manage_composer_agent"],
                     danger=True,
                 ),
@@ -160,10 +179,10 @@ class ManagedProjectTable(DluxTable):
         actions += [
             {"type": "divider"},
             self._modal_action(
-                "Recovery deploy",
+                s.get("fleet_action_recovery", "Recovery deploy"),
                 "bi bi-exclamation-octagon",
                 reverse("fleet:project_recovery", args=[record.pk]),
-                f"Break-glass recovery — {name}",
+                name,
                 permissions=["fleet.run_recovery_deploy"],
                 danger=True,
             ),

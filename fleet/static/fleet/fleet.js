@@ -1,6 +1,50 @@
 (() => {
+    // Click-to-copy for enrollment fields. Delegated on document because the
+    // enrollment token is rendered inside a dynamic modal, whose injected HTML
+    // never runs its own inline scripts.
+    document.addEventListener("click", (event) => {
+        const btn = event.target.closest("[data-fleet-copy]");
+        if (!btn) return;
+        const value = btn.getAttribute("data-fleet-copy");
+        const icon = btn.querySelector("[data-copy-icon]");
+        const flash = () => {
+            if (!icon) return;
+            icon.className = "bi bi-check2 float-end text-success";
+            btn.setAttribute("title", btn.getAttribute("data-copied-label") || "");
+            setTimeout(() => {
+                icon.className = "bi bi-clipboard float-end";
+                btn.setAttribute("title", btn.getAttribute("data-copy-label") || "");
+            }, 1500);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(value).then(flash).catch(() => {});
+        } else {
+            const ta = document.createElement("textarea");
+            ta.value = value;
+            ta.style.position = "fixed";
+            ta.style.opacity = "0";
+            document.body.appendChild(ta);
+            ta.select();
+            try { document.execCommand("copy"); flash(); } catch (_) {}
+            document.body.removeChild(ta);
+        }
+    });
+
+    // Reload the underlying overview when the enrollment token modal is closed,
+    // so the fleet table reflects the agent's state once it has paired.
+    document.addEventListener("click", (event) => {
+        if (event.target.closest("[data-fleet-reload]")) {
+            window.location.reload();
+        }
+    });
+
     const root = document.querySelector("[data-fleet-root]");
     const terminal = new Set(["succeeded", "failed", "cancelled"]);
+
+    // Shared, null-safe helpers (the detail modal renders on pages with no root).
+    const phaseFromRoot = (phase) =>
+        (root && phase && root.getAttribute(`data-phase-${phase}`)) || phase || "";
+    const rootOverdue = () => (root && root.dataset.labelOverdue) || "";
 
     // Operation rows inside an open detail modal advance in place.
     const pollOpenRows = async () => {
@@ -14,7 +58,11 @@
                 });
                 if (!response.ok) return;
                 const data = await response.json();
-                stateNode.textContent = data.state;
+                const status = data.status || {};
+                stateNode.textContent = status.overdue ? (rootOverdue() || data.state) : data.state;
+                stateNode.classList.toggle("text-danger", Boolean(status.overdue));
+                const phaseNode = row.querySelector("[data-operation-phase]");
+                if (phaseNode) phaseNode.textContent = phaseFromRoot(status.phase);
                 const resultNode = row.querySelector("[data-operation-result]");
                 if (resultNode) resultNode.textContent = JSON.stringify(data.result || {}, null, 2);
             } catch (_) {}
@@ -29,35 +77,70 @@
     const strip = root.querySelector("[data-operations-strip]");
     const list = root.querySelector("[data-operations-list]");
     const count = root.querySelector("[data-operations-count]");
+    const note = root.querySelector("[data-operations-note]");
     const feedUrl = root.dataset.operationsUrl;
 
+    // Compact, language-neutral elapsed label (unit only, no sentence) so word
+    // order never needs translating: 45s / 12m / 3h.
+    const ago = (seconds) => {
+        const s = Math.max(0, Math.floor(seconds || 0));
+        if (s < 60) return `${s}s`;
+        if (s < 3600) return `${Math.floor(s / 60)}m`;
+        return `${Math.floor(s / 3600)}h`;
+    };
     // The strip keeps queued work visible after its modal closes, so the single
-    // page still reflects operations in flight across the whole fleet.
+    // page still reflects operations in flight across the whole fleet, and shows
+    // enough — phase, elapsed, agent reachability — to tell progressing from stuck.
     const renderStrip = (operations) => {
         if (!strip || !list) return;
         list.textContent = "";
+        let recreateExpected = false;
         operations.forEach((operation) => {
-            const button = document.createElement("button");
-            button.type = "button";
-            button.className = "btn btn-sm btn-outline-secondary rounded-pill";
-            button.dataset.dynamicModal = operation.detail_url;
-            button.dataset.modalTitle = operation.project;
+            const card = document.createElement("button");
+            card.type = "button";
+            card.className = "btn btn-sm text-start w-100 rounded-3 d-flex align-items-center gap-2 " +
+                (operation.overdue ? "btn-outline-danger" : "btn-outline-secondary");
+            card.dataset.dynamicModal = operation.detail_url;
+            card.dataset.modalTitle = operation.project;
+
+            const dot = document.createElement("span");
+            dot.className = "dlux-online-dot " +
+                (operation.agent_online ? "dlux-online-dot--on" : "dlux-online-dot--off");
+            dot.title = operation.agent_online ? "online" : "offline";
 
             const name = document.createElement("span");
             name.className = "fw-semibold";
             name.textContent = operation.project;
-            const action = document.createElement("span");
-            action.className = "text-muted";
-            action.textContent = ` · ${operation.action}`;
-            const state = document.createElement("span");
-            state.className = "badge text-bg-info ms-1";
-            state.textContent = operation.state;
 
-            button.append(name, action, state);
-            list.appendChild(button);
+            const meta = document.createElement("span");
+            meta.className = "text-muted small flex-grow-1";
+            const phase = phaseFromRoot(operation.phase);
+            meta.textContent = ` · ${operation.action}` + (phase ? ` · ${phase}` : "");
+
+            const badge = document.createElement("span");
+            if (operation.overdue) {
+                badge.className = "badge text-bg-danger";
+                badge.textContent = root.dataset.labelOverdue || "overdue";
+            } else {
+                badge.className = "badge text-bg-info";
+                badge.textContent = operation.state;
+            }
+
+            const clock = document.createElement("span");
+            clock.className = "badge text-bg-light text-muted ms-1";
+            clock.innerHTML = `<i class="bi bi-clock me-1"></i>${ago(operation.age_seconds)}`;
+
+            card.append(dot, name, meta, badge, clock);
+            list.appendChild(card);
+            if (operation.recreate_expected) recreateExpected = true;
         });
         if (count) count.textContent = String(operations.length);
         strip.classList.toggle("d-none", operations.length === 0);
+        if (note) {
+            const show = recreateExpected && operations.length > 0;
+            note.textContent = show ? (root.dataset.labelRecreate || "") : "";
+            note.classList.toggle("d-none", !show);
+        }
     };
 
     const pollFeed = async () => {
@@ -72,6 +155,7 @@
         } catch (_) {}
     };
 
+    pollFeed();
     window.setInterval(() => {
         pollFeed();
         pollOpenRows();

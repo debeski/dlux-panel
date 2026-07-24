@@ -1,0 +1,23 @@
+{% load static %}
+<p class="text-muted small mb-3">
+    {{ DLUX_STRINGS.fleet_layout_desc|default:"Choose how the fleet overview lists projects: a full data table or informative cards." }}
+</p>
+{% if fleet_layout_selector_html %}
+<div id="div_id_fleet_overview_layout" class="mb-1"
+     data-fleet-layout-switch
+     data-fleet-layout-ns="{{ fleet_layout_ns }}"
+     data-app-pref-url-template="{% url 'update_app_preference' '__namespace__' %}"
+     data-saved-message="{{ DLUX_STRINGS.fleet_layout_saved|default:'Fleet layout saved.' }}">
+    {{ fleet_layout_selector_html }}
+</div>
+{% else %}
+<div class="btn-group" role="group" data-fleet-layout-switch
+     data-fleet-layout-ns="{{ fleet_layout_ns }}"
+     data-app-pref-url-template="{% url 'update_app_preference' '__namespace__' %}">
+    <button type="button" class="btn btn-sm {% if fleet_layout == 'table' %}btn-primary{% else %}btn-outline-secondary{% endif %}"
+            data-fleet-layout-option="table"><i class="bi bi-table me-1"></i>{{ DLUX_STRINGS.fleet_layout_table|default:'Table' }}</button>
+    <button type="button" class="btn btn-sm {% if fleet_layout == 'cards' %}btn-primary{% else %}btn-outline-secondary{% endif %}"
+            data-fleet-layout-option="cards"><i class="bi bi-grid-3x3-gap-fill me-1"></i>{{ DLUX_STRINGS.fleet_layout_cards|default:'Cards' }}</button>
+</div>
+{% endif %}
+<script src="{% static 'fleet/layout.js' %}" nonce="{{ request.csp_nonce }}" defer></script>

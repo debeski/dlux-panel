@@ -7,6 +7,8 @@ app_name = "fleet"
 
 urlpatterns = [
     path("", views.FleetOverviewView.as_view(), name="overview"),
+    path("projects/modal/", views.ManagedProjectModalView.as_view(), name="project_modal_add"),
+    path("projects/modal/<uuid:pk>/", views.ManagedProjectModalView.as_view(), name="project_modal_edit"),
     path("projects/<uuid:pk>/", views.ManagedProjectDetailView.as_view(), name="project_detail"),
     path("projects/<uuid:pk>/update/", views.ProjectUpdateActionView.as_view(), name="project_update"),
     path("projects/<uuid:pk>/backup/", views.ProjectBackupActionView.as_view(), name="project_backup"),

@@ -2,7 +2,7 @@
 
 ## Part 1: Project Related
 ### Current Verified Snapshot:
-- Dedicated DjangoLux fleet control panel v0.1.3 has native scoped fleet UI and its own generated `composer-agent`.
+- Dedicated DjangoLux fleet control panel (v0.1.4 released; v0.1.5 pending) has native scoped fleet UI and its own generated `composer-agent`.
 - Schema-v1 API runs under Uvicorn/ASGI and implements hashed enrollment/auth, long polls, monotonic events, snapshots, local reconciliation, capabilities, rotation, and revocation.
 - Typed actions cover DLUX image update/backup creation, safe restart, and audited recovery; remote restore/arbitrary execution are absent.
 
@@ -33,6 +33,9 @@
   - [ ] Enroll the control panel's own agent in staging.
   - [ ] Add separate SSO project after the fleet deployment path stabilizes.
 - **Completed Recently:**
+  - [x] Table/cards overview toggle via dlux Options (`fleet/dlux_options.py` card + settings tile, `fleet/layouts.py` resolver); cards reuse the row context menu.
+  - [x] Operation observability: feed/status expose phase, last-event age, overdue, agent online/last-seen; strip renders them; `expire_stale_operations` beat task auto-fails stuck ops past `deadline_at`+grace; add/edit/enrollment modals refresh the table.
+  - [x] Localized the whole fleet panel en/ar via `fleet/translations.py` (per-request header/badge relabel); added form-only project modal (`show_table=False`) and click-to-copy enrollment fields.
   - [x] Rebuilt the panel as one page on `DluxTable`/`FilterView` with a dynamic-modal row context menu, retiring the detail/form pages and `project_add`/`project_edit` routes.
   - [x] v0.1.3 enrollment pages copy canonical `BASE_URL`, preserving the public HTTPS origin across the internal HTTP proxy hop.
   - [x] Implemented fleet models/migration, scoped UI/actions, agent API, controlled batches, backup inspection, retention, and immutable break-glass audit.
@@ -43,7 +46,7 @@
   - [x] Prepared Dlux 1.5.6 visible pairing validation and Archive v1.1.7 with the corrected target pin.
 
 ### One-line info about last verified Tests:
-- 2026-07-24: panel 38/38 and Dlux 900/900 GREEN (14 panel-UI + 4 app_version-source tests); rendered-HTML check confirms dlux table, filter, and modal triggers.
+- 2026-07-25: panel 53/53 GREEN (incl. layout table/cards toggle, per-user+global default, cards context menu, operation-sweep, live-status, Arabic); Dlux 909/909 GREEN.
 
 ### One-line info about last time edited Docs:
 - 2026-07-24: operations documents canonical HTTPS `BASE_URL` enrollment; design notes cover baked-version and pairing repairs.

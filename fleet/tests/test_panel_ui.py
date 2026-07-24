@@ -4,6 +4,7 @@ import json
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
+from django.core.cache import cache
 from django.test import Client, TestCase
 from django.urls import reverse
 
@@ -17,6 +18,7 @@ AJAX = {"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"}
 
 class PanelUITests(TestCase):
     def setUp(self):
+        cache.clear()
         settings = SystemSettings.load()
         settings.is_configured = True
         settings.save(update_fields=("is_configured",))
@@ -38,10 +40,29 @@ class PanelUITests(TestCase):
     def test_overview_offers_modal_triggers_instead_of_form_pages(self):
         body = self.client.get(reverse("fleet:overview")).content.decode()
         self.assertIn("data-dynamic-modal", body)
-        self.assertIn(
-            reverse("modal_manager", args=["fleet", "ManagedProject", "new"]), body
-        )
+        self.assertIn(reverse("fleet:project_modal_add"), body)
         self.assertIn(reverse("fleet:batch_add"), body)
+
+    def test_add_edit_modal_is_form_only(self):
+        add = self.client.get(reverse("fleet:project_modal_add"), **AJAX)
+        self.assertEqual(add.status_code, 200)
+        html = json.loads(add.content)["html"]
+        self.assertIn("name", html)
+        # A form-only modal must not embed the record listing table.
+        self.assertNotIn("dlux-data-table", html)
+
+    def test_adding_a_project_refreshes_the_parent_table(self):
+        response = self.client.post(
+            reverse("fleet:project_modal_add"),
+            {"name": "Newbie", "slug": "newbie", "environment": "production", "is_active": "on"},
+            **AJAX,
+        )
+        payload = json.loads(response.content)
+        self.assertTrue(payload["success"])
+        # The form-only modal has no inner list, so it must reload the overview
+        # for the new row to appear in the fleet table.
+        self.assertTrue(payload["refresh_parent"])
+        self.assertTrue(ManagedProject.objects.filter(slug="newbie").exists())
 
     def test_row_actions_all_open_modals(self):
         from fleet.tables import ManagedProjectTable
@@ -102,6 +123,32 @@ class PanelUITests(TestCase):
         self.assertIn("Pairing token", html)
         self.assertIn("Control panel URL", html)
 
+    def test_enrollment_values_are_click_to_copy(self):
+        url = reverse("fleet:project_enrollment", args=[self.project.pk])
+        html = json.loads(self.client.post(url, **AJAX).content)["html"]
+        # Both the control URL and the token expose a copy trigger.
+        self.assertEqual(html.count("data-fleet-copy="), 2)
+
+    def test_panel_renders_in_arabic(self):
+        settings = SystemSettings.load()
+        settings.default_language = "ar"
+        settings.save(update_fields=("default_language",))
+        try:
+            profile = self.user.profile
+            profile.language = "ar"
+            profile.save(update_fields=("language",))
+        except Exception:
+            pass
+
+        body = self.client.get(reverse("fleet:overview")).content.decode()
+        self.assertIn("المشروع", body)      # table header "Project"
+        self.assertIn("إضافة مشروع", body)   # "Add project"
+
+        detail = json.loads(
+            self.client.get(reverse("fleet:project_detail", args=[self.project.pk]), **AJAX).content
+        )["html"]
+        self.assertIn("لقطة DLUX", detail)   # "DLUX snapshot"
+
     def test_confirm_modals_gate_agent_operations(self):
         response = self.client.get(
             reverse("fleet:project_revoke", args=[self.project.pk]), **AJAX
@@ -135,6 +182,33 @@ class PanelUITests(TestCase):
             reverse("fleet:project_detail", args=[self.project.pk]),
         )
 
+    def test_feed_reports_live_status_fields(self):
+        queue_operation(self.project, "composer.restart", {"service": "web"}, self.user)
+        entry = json.loads(self.client.get(reverse("fleet:operations_active")).content)["operations"][0]
+        for key in ("phase", "age_seconds", "overdue", "agent_online", "recreate_expected", "deadline_at"):
+            self.assertIn(key, entry)
+        self.assertFalse(entry["overdue"])
+        self.assertFalse(entry["agent_online"])  # no agent enrolled yet
+
+    def test_operation_status_includes_live_status_block(self):
+        operation = queue_operation(self.project, "composer.restart", {"service": "web"}, self.user)
+        data = json.loads(
+            self.client.get(reverse("fleet:operation_status", args=[operation.operation_id])).content
+        )
+        self.assertIn("status", data)
+        self.assertEqual(data["status"]["state"], "queued")
+
+    def test_overdue_operation_is_flagged_before_it_is_swept(self):
+        from django.utils import timezone
+        from datetime import timedelta
+
+        operation = queue_operation(self.project, "composer.restart", {"service": "web"}, self.user)
+        FleetOperation.objects.filter(pk=operation.pk).update(
+            state="delivered", deadline_at=timezone.now() - timedelta(minutes=1)
+        )
+        entry = json.loads(self.client.get(reverse("fleet:operations_active")).content)["operations"][0]
+        self.assertTrue(entry["overdue"])
+
     def test_deep_link_opens_a_scoped_project_modal(self):
         response = self.client.get(reverse("fleet:overview"), {"project": str(self.project.pk)})
         self.assertContains(
@@ -147,8 +221,123 @@ class PanelUITests(TestCase):
         self.assertNotContains(response, "data-open-project-url")
 
 
+class FleetLayoutTests(TestCase):
+    def setUp(self):
+        cache.clear()
+        settings = SystemSettings.load()
+        settings.is_configured = True
+        settings.save(update_fields=("is_configured",))
+        self.user = get_user_model().objects.create_superuser(
+            username="root", password="panel-pass", email="root@example.com"
+        )
+        self.client = Client()
+        self.client.force_login(self.user)
+        self.project = ManagedProject.objects.create(name="Forms", slug="forms", environment="production")
+
+    def test_default_layout_is_the_table(self):
+        body = self.client.get(reverse("fleet:overview")).content.decode()
+        self.assertIn("dlux-data-table", body)
+        self.assertNotIn("data-fleet-cards", body)
+
+    def test_per_user_preference_switches_to_cards(self):
+        self.client.post(
+            reverse("update_app_preference", args=["fleet.overview_layout"]),
+            data=json.dumps("cards"),
+            content_type="application/json",
+        )
+        body = self.client.get(reverse("fleet:overview")).content.decode()
+        self.assertIn("data-fleet-cards", body)
+        self.assertNotIn("dlux-data-table", body)
+
+    def test_cards_carry_the_same_context_menu_actions(self):
+        from fleet.layouts import FLEET_LAYOUT_NS
+
+        profile = self.user.profile
+        prefs = profile.preferences or {}
+        prefs.setdefault("app", {})[FLEET_LAYOUT_NS] = "cards"
+        profile.preferences = prefs
+        profile.save(update_fields=("preferences",))
+
+        body = self.client.get(reverse("fleet:overview")).content.decode()
+        self.assertIn("data-dlux-context=\"true\"", body)
+        self.assertIn("data-dlux-actions", body)
+        self.assertIn("dlux:dynamic_modal:open", body)
+
+    def test_global_default_applies_without_a_per_user_pref(self):
+        from fleet.layouts import get_default_fleet_layout, FLEET_LAYOUT_NS
+
+        settings = SystemSettings.load()
+        extra = settings.extra_config or {}
+        extra.setdefault("app", {})[FLEET_LAYOUT_NS] = {"default_layout": "cards"}
+        settings.extra_config = extra
+        settings.save(update_fields=("extra_config",))
+        self.assertEqual(get_default_fleet_layout(), "cards")
+
+    def test_layout_option_card_is_visible_on_the_options_page(self):
+        from dlux.options import get_visible_cards
+
+        request = type("Req", (), {"user": self.user})()
+        ids = {card.get("id") if isinstance(card, dict) else getattr(card, "id", None)
+               for card in get_visible_cards(request)}
+        self.assertIn("fleet.overview_layout", ids)
+
+
+class OperationSweepTests(TestCase):
+    def setUp(self):
+        cache.clear()
+        settings = SystemSettings.load()
+        settings.is_configured = True
+        settings.save(update_fields=("is_configured",))
+        self.user = get_user_model().objects.create_superuser(
+            username="root", password="panel-pass", email="root@example.com"
+        )
+        self.project = ManagedProject.objects.create(name="Forms", slug="forms")
+
+    def test_stuck_operation_is_failed_after_grace(self):
+        from django.utils import timezone
+        from datetime import timedelta
+        from fleet.services import expire_stale_operations
+
+        operation = queue_operation(self.project, "dlux.image_update", {"backup_mode": "data"}, self.user)
+        FleetOperation.objects.filter(pk=operation.pk).update(
+            state="delivered", deadline_at=timezone.now() - timedelta(minutes=30)
+        )
+        self.assertEqual(expire_stale_operations(grace_minutes=10), 1)
+        operation.refresh_from_db()
+        self.assertEqual(operation.state, "failed")
+        self.assertTrue(operation.result.get("expired"))
+
+    def test_operation_within_grace_is_left_running(self):
+        from django.utils import timezone
+        from datetime import timedelta
+        from fleet.services import expire_stale_operations
+
+        operation = queue_operation(self.project, "dlux.image_update", {"backup_mode": "data"}, self.user)
+        # Past its own deadline, but still inside the grace window.
+        FleetOperation.objects.filter(pk=operation.pk).update(
+            state="running", deadline_at=timezone.now() - timedelta(minutes=2)
+        )
+        self.assertEqual(expire_stale_operations(grace_minutes=10), 0)
+        operation.refresh_from_db()
+        self.assertEqual(operation.state, "running")
+
+    def test_terminal_operations_are_untouched(self):
+        from django.utils import timezone
+        from datetime import timedelta
+        from fleet.services import expire_stale_operations
+
+        operation = queue_operation(self.project, "composer.restart", {"service": "web"}, self.user)
+        FleetOperation.objects.filter(pk=operation.pk).update(
+            state="succeeded", deadline_at=timezone.now() - timedelta(hours=2)
+        )
+        self.assertEqual(expire_stale_operations(grace_minutes=10), 0)
+        operation.refresh_from_db()
+        self.assertEqual(operation.state, "succeeded")
+
+
 class PanelPermissionTests(TestCase):
     def setUp(self):
+        cache.clear()
         settings = SystemSettings.load()
         settings.is_configured = True
         settings.save(update_fields=("is_configured",))

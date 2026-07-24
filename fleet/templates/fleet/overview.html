@@ -8,27 +8,31 @@
 {% block content %}
 <div class="container-fluid py-4" data-fleet-root
      data-operations-url="{% url 'fleet:operations_active' %}"
+     data-label-overdue="{{ DLUX_STRINGS.fleet_op_overdue|default:'Overdue — agent not responding' }}"
+     data-label-recreate="{{ DLUX_STRINGS.fleet_op_recreate|default:'Applying update — the app and agent briefly restart, so this can take a few minutes.' }}"
+     data-phase-awaiting_dlux="{{ DLUX_STRINGS.fleet_phase_awaiting_dlux|default:'Applying image update' }}"
+     data-phase-composer_deploy="{{ DLUX_STRINGS.fleet_phase_composer_deploy|default:'Recreating containers' }}"
      {% if open_project %}data-open-project-url="{% url 'fleet:project_detail' open_project.pk %}"
      data-open-project-name="{{ open_project.name }}"{% endif %}>
 
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
         <div>
-            <h2 class="page-title mb-1"><i class="bi bi-diagram-3 me-2"></i> Fleet</h2>
-            <p class="text-muted mb-0">Current state relayed by each project's DLUX runtime. Right-click a row for its actions.</p>
+            <h2 class="page-title mb-1"><i class="bi bi-diagram-3 me-2"></i> {{ DLUX_STRINGS.app_fleet|default:'Fleet' }}</h2>
+            <p class="text-muted mb-0">{{ DLUX_STRINGS.fleet_subtitle|default:"Current state relayed by each project's DLUX runtime. Right-click a row for its actions." }}</p>
         </div>
         <div class="d-flex gap-2">
             {% if perms.fleet.run_fleet_batch %}
             <button type="button" class="btn btn-outline-primary rounded-pill"
                     data-dynamic-modal="{% url 'fleet:batch_add' %}"
-                    data-modal-title="Batch update">
-                <i class="bi bi-layers me-1"></i> Batch update
+                    data-modal-title="{{ DLUX_STRINGS.fleet_batch_update|default:'Batch update' }}">
+                <i class="bi bi-layers me-1"></i> {{ DLUX_STRINGS.fleet_batch_update|default:'Batch update' }}
             </button>
             {% endif %}
             {% if perms.fleet.add_managedproject %}
             <button type="button" class="btn btn-primary rounded-pill"
-                    data-dynamic-modal="{% url 'modal_manager' 'fleet' 'ManagedProject' 'new' %}"
-                    data-modal-title="Add project">
-                <i class="bi bi-plus-lg me-1"></i> Add project
+                    data-dynamic-modal="{% url 'fleet:project_modal_add' %}"
+                    data-modal-title="{{ DLUX_STRINGS.fleet_add_project|default:'Add project' }}">
+                <i class="bi bi-plus-lg me-1"></i> {{ DLUX_STRINGS.fleet_add_project|default:'Add project' }}
             </button>
             {% endif %}
         </div>
@@ -39,20 +43,11 @@
         <div class="card-body py-3">
             <div class="d-flex align-items-center gap-2 mb-2">
                 <span class="spinner-border spinner-border-sm text-primary"></span>
-                <h6 class="mb-0">In flight</h6>
+                <h6 class="mb-0">{{ DLUX_STRINGS.fleet_in_flight|default:'In flight' }}</h6>
                 <span class="badge text-bg-secondary" data-operations-count>{{ active_operations|length }}</span>
             </div>
-            <div class="d-flex flex-wrap gap-2" data-operations-list>
-                {% for operation in active_operations %}
-                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill"
-                        data-dynamic-modal="{% url 'fleet:project_detail' operation.project_id %}"
-                        data-modal-title="{{ operation.project.name }}">
-                    <span class="fw-semibold">{{ operation.project.name }}</span>
-                    <span class="text-muted">· {{ operation.action }}</span>
-                    <span class="badge text-bg-info ms-1">{{ operation.state }}</span>
-                </button>
-                {% endfor %}
-            </div>
+            <div class="d-flex flex-column gap-2" data-operations-list></div>
+            <p class="small text-muted mb-0 mt-2 d-none" data-operations-note></p>
         </div>
     </div>
 
@@ -62,9 +57,13 @@
     </div></div>
     {% endif %}
 
+    {% if fleet_layout == 'cards' %}
+        {% include "fleet/partials/project_cards.html" %}
+    {% else %}
     <div class="card border-0 shadow-sm rounded-4"><div class="card-body">
         {% render_table table %}
     </div></div>
+    {% endif %}
 </div>
 {% endblock %}
 

@@ -397,6 +397,48 @@ def cancel_operation(operation, actor=None):
     return operation
 
 
+def expire_stale_operations(grace_minutes=None):
+    """Fail operations still in flight well past their deadline.
+
+    Deadline expiry otherwise only fires when the agent next polls
+    (``claim_next_command``). An agent that never returns — e.g. it was lost
+    during the container recreate an image update triggers — would leave the
+    operation spinning forever. This sweep is the server-side safety net: it
+    fails anything not terminal by ``deadline_at + grace`` so the panel's
+    in-flight strip clears instead of hanging.
+    """
+    from django.conf import settings
+
+    if grace_minutes is None:
+        grace_minutes = getattr(settings, "FLEET_OPERATION_GRACE_MINUTES", 10)
+    cutoff = timezone.now() - timedelta(minutes=max(1, int(grace_minutes)))
+    stale = FleetOperation.objects.filter(
+        state__in=("queued",) + ACTIVE_STATES,
+        deadline_at__lt=cutoff,
+    ).values_list("pk", flat=True)
+
+    expired = 0
+    for operation_id in list(stale):
+        with transaction.atomic():
+            operation = (
+                FleetOperation.objects.select_for_update()
+                .filter(pk=operation_id, state__in=("queued",) + ACTIVE_STATES)
+                .first()
+            )
+            if operation is None or operation.deadline_at >= cutoff:
+                continue
+            operation.state = "failed"
+            operation.finished_at = timezone.now()
+            operation.result = {
+                "error": "Operation exceeded its deadline; the agent never reported completion.",
+                "expired": True,
+            }
+            operation.save(update_fields=("state", "finished_at", "result", "updated_at"))
+            _refresh_batch(operation.batch_id)
+            expired += 1
+    return expired
+
+
 @transaction.atomic
 def record_local_operation(agent, document):
     if not isinstance(document, dict) or document.get("schema_version") != SCHEMA_VERSION:

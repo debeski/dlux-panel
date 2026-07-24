@@ -20,6 +20,12 @@ Batches default to concurrency one and are capped at three. Dispatch follows mem
 
 Recovery deploy is superuser-only and requires `fleet.run_recovery_deploy`, the current password, an entered reason, and acknowledgement of the backup-bypass warning. It creates an immutable `BreakGlassAudit` plus the native DLUX audit entry.
 
+## Operation visibility and stuck operations
+
+The in-flight strip and detail modal show each operation's latest event phase, seconds since the last event, the agent's online/last-seen state, and an `overdue` flag once past `deadline_at`. An image update deliberately recreates `web`, `celery`, and `composer-agent`, so its agent is expected to go offline mid-operation (phases `awaiting_dlux`/`composer_deploy`) — the strip surfaces that as an expected restart rather than a fault.
+
+Deadline expiry otherwise only fires when the agent next polls, so an agent lost during a recreate would leave the operation in flight forever. The `fleet.tasks.expire_stale_operations` Celery-beat task (every 120s) fails any non-terminal operation past `deadline_at` + `FLEET_OPERATION_GRACE_MINUTES` (default 10), clearing it from the strip. To unstick one immediately, cancel it from the operation history.
+
 ## Retention and rollout
 
 Sanitized console bodies are cleared after `FLEET_OPERATION_LOG_RETENTION_DAYS` (90 by default) by daily Celery beat task `fleet.tasks.prune_operation_logs`; operation/event metadata remains. The same cleanup can be run with `python manage.py prune_fleet_operation_logs`.

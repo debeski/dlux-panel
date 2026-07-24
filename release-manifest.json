@@ -1,11 +1,13 @@
 {
   "schema_version": 1,
-  "version": "0.1.4",
-  "summary": "Restores the application version in the Updates card and makes the deployment point at the published image so updates are discovered.",
+  "version": "0.1.5",
+  "summary": "Adds a table/cards layout toggle, real in-flight operation visibility with an auto-expiry safety net, a fully bilingual (English/Arabic) panel, and table refresh after add/edit and enrollment.",
   "highlights": [
-    "The Updates card reports this project's version again, read from release-manifest.json.",
-    "WEB_IMAGE is set once in .secrets/.env, so every compose reference resolves to the published image.",
-    "The composer agent no longer polls an unpublished local image name, which silently hid every update."
+    "Switch the fleet overview between a data table and informative cards, per user or a fleet-wide default.",
+    "In-flight operations show phase, elapsed time, agent online state, and an overdue flag instead of a bare badge.",
+    "Stuck operations past their deadline are auto-failed by a Celery-beat sweep, so the strip never hangs forever.",
+    "The whole fleet panel now translates to Arabic — table, cards, filters, modals, forms, and messages.",
+    "Add, edit, and enrollment modals refresh the fleet table so changes appear without a manual reload."
   ],
-  "release_url": "https://github.com/debeski/dlux-panel/releases/tag/v0.1.4"
+  "release_url": "https://github.com/debeski/dlux-panel/releases/tag/v0.1.5"
 }
