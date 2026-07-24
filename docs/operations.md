@@ -2,7 +2,7 @@
 
 ## Enrollment and availability
 
-Create a `ManagedProject` in its native DLUX scope, then create an enrollment token from its project page. Tokens are single-use and expire after 15 minutes. Store the control URL and token in the target deployment's private environment and recreate `composer-agent`. The resulting random bearer secret persists in that project's dedicated agent-state volume; the panel stores only its hash.
+Create a `ManagedProject` in its native DLUX scope, then create an enrollment token from its project page. Tokens are single-use and expire after 15 minutes. The displayed control URL comes from the panel's canonical `BASE_URL`; production must set it to the public HTTPS origin, such as `https://dlux.eidc.gov.ly`, so an internal HTTP proxy hop cannot produce an invalid pairing URL. Paste that URL and token into the target application's `/sys/control-panel/` page. The resulting random bearer secret persists in that project's dedicated agent-state volume; the panel stores only its hash.
 
 Credential rotation is issued as a typed command. The server stages a pending hash, the agent persists the new secret in SQLite, confirms with it, and only then promotes it and revokes the old credential. Interrupted confirmations replay from durable state. Revocation blocks central traffic immediately without disabling local DLUX updates.
 

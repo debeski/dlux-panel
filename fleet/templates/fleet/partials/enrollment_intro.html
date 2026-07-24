@@ -1,0 +1,16 @@
+<div class="modal-header border-0 pb-0">
+    <h5 class="modal-title fw-bold"><i class="bi bi-key me-2"></i> Enroll {{ project.name }}</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+
+<div class="modal-body p-4">
+    <p>Generating a token issues a <strong>one-use</strong> pairing secret that expires in 15 minutes and is shown only once. The panel stores only its hash.</p>
+    <p class="text-muted small mb-4">You will paste the control-panel URL and token into the target app's <em>DjangoLux → Control Panel</em> tile. No redeploy is required.</p>
+    <form method="post" action="{{ action_url }}">
+        {% csrf_token %}
+        <div class="dlux-modal-form-actions d-flex justify-content-end gap-2">
+            <button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary rounded-pill">Generate token</button>
+        </div>
+    </form>
+</div>

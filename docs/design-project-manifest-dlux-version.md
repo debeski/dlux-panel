@@ -2,6 +2,8 @@
 
 Status: **implemented** in composer v1.2.3, DjangoLux v1.5.4, and this project. The badge only renders once the project pins `django-lux>=1.5.4`; on 1.5.3 the field is emitted and simply ignored.
 
+Separately, DjangoLux **v1.5.5** moves UI Control Panel pairing off the read-only web mount by queuing intents in `DluxControlLinkRequest`; **v1.5.6** makes HTTPS validation and pairing confirmation visible through native DjangoLux flashes.
+
 ## Naming (confirmed against the code)
 
 `baked_dlux_version`, not `dlux_version`. DjangoLux already separates the two concepts on `DluxUpdateState`:

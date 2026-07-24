@@ -8,7 +8,7 @@ from asgiref.sync import async_to_sync
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import Permission
-from django.test import AsyncClient, Client, TestCase, TransactionTestCase
+from django.test import AsyncClient, Client, TestCase, TransactionTestCase, override_settings
 from django.utils import timezone
 
 from dlux.models import Profile, Scope, ScopeSettings, SystemSettings
@@ -292,6 +292,36 @@ class AgentApiTests(TestCase):
         self.assertEqual(response.json()["command"]["payload"], {"backup_mode": "full"})
         with self.assertRaisesMessage(Exception, "Unsupported remote action"):
             queue_operation(self.project, "dlux.backup.restore", {})
+
+
+class EnrollmentTokenViewTests(TestCase):
+    def setUp(self):
+        settings = SystemSettings.load()
+        settings.is_configured = True
+        settings.save(update_fields=("is_configured",))
+        self.project = ManagedProject.objects.create(name="Alpha", slug="alpha")
+        self.admin = get_user_model().objects.create_superuser(
+            username="root",
+            password="correct-pass",
+            email="root@example.com",
+        )
+        self.client = Client()
+        self.client.force_login(self.admin)
+
+    @override_settings(
+        BASE_URL="https://dlux.eidc.gov.ly",
+        ALLOWED_HOSTS=["dlux.eidc.gov.ly"],
+    )
+    def test_enrollment_page_copies_configured_https_control_url(self):
+        response = self.client.post(
+            f"/fleet/projects/{self.project.pk}/enrollment/",
+            HTTP_HOST="dlux.eidc.gov.ly",
+            HTTP_X_FORWARDED_PROTO="http",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["control_url"], "https://dlux.eidc.gov.ly")
+        self.assertContains(response, "https://dlux.eidc.gov.ly")
 
 
 class BatchAndAuthorizationTests(TestCase):

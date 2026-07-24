@@ -1,0 +1,64 @@
+<div class="modal-header border-0 pb-0">
+    <div>
+        <h5 class="modal-title fw-bold mb-0"><i class="bi bi-box me-2"></i> {{ project.name }}</h5>
+        <div class="small text-muted">{{ project.environment }}{% if project.base_url %} · <a href="{{ project.base_url }}" target="_blank" rel="noopener">{{ project.base_url }}</a>{% endif %}</div>
+    </div>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+
+<div class="modal-body p-4">
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <h6 class="text-uppercase small text-muted">Composer agent</h6>
+            {% if project.agent %}
+            <p class="mb-2">
+                {% if project.agent.is_online %}<span class="badge text-bg-success">Online</span>
+                {% elif project.agent.revoked_at %}<span class="badge text-bg-danger">Revoked</span>
+                {% else %}<span class="badge text-bg-secondary">Offline</span>{% endif %}
+            </p>
+            <dl class="row small mb-0">
+                <dt class="col-5">Agent ID</dt><dd class="col-7 text-break font-monospace">{{ project.agent.pk }}</dd>
+                <dt class="col-5">Version</dt><dd class="col-7">{{ project.agent.agent_version|default:"—" }}</dd>
+                <dt class="col-5">Last seen</dt><dd class="col-7">{{ project.agent.last_seen_at|date:"Y-m-d H:i:s"|default:"Never" }}</dd>
+            </dl>
+            {% else %}
+            <p class="text-muted small mb-0">Not enrolled. Use the row's <em>Enrollment token</em> action.</p>
+            {% endif %}
+        </div>
+        <div class="col-md-6">
+            <h6 class="text-uppercase small text-muted">DLUX snapshot</h6>
+            {% if project.latest_snapshot %}
+            <dl class="row small mb-0">
+                <dt class="col-5">Project version</dt><dd class="col-7">{{ project.latest_snapshot.versions.application|default:"—" }}</dd>
+                <dt class="col-5">DLUX version</dt><dd class="col-7">{{ project.latest_snapshot.versions.dlux|default:"—" }}</dd>
+                <dt class="col-5">Update</dt><dd class="col-7">{{ project.latest_snapshot.update_state.active_status|default:"—" }}</dd>
+                <dt class="col-5">Backup</dt><dd class="col-7">{{ project.latest_snapshot.backup_summary.status|default:"—" }}</dd>
+                <dt class="col-5">Database</dt><dd class="col-7">{{ project.latest_snapshot.health_summary.database|default:"—" }}</dd>
+                <dt class="col-5">Observed</dt><dd class="col-7">{{ project.latest_snapshot.observed_at|date:"Y-m-d H:i:s" }}</dd>
+            </dl>
+            {% else %}
+            <p class="text-muted small mb-0">No snapshot has been relayed.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <h6 class="text-uppercase small text-muted">Operation history</h6>
+    <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+            <thead><tr><th>Created</th><th>Action</th><th>State</th><th>Actor</th><th>Latest detail</th></tr></thead>
+            <tbody>
+            {% for operation in operations %}
+                <tr data-operation-url="{% url 'fleet:operation_status' operation.pk %}">
+                    <td class="text-nowrap small">{{ operation.created_at|date:"Y-m-d H:i:s" }}</td>
+                    <td class="small">{{ operation.action }}</td>
+                    <td class="small" data-operation-state>{{ operation.state }}</td>
+                    <td class="small">{{ operation.actor_display|default:"Local DLUX" }}</td>
+                    <td><pre class="small mb-0 text-wrap" data-operation-result>{{ operation.result|default:"—" }}</pre></td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="5" class="text-muted text-center py-4">No operations yet.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>

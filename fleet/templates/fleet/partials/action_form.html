@@ -1,0 +1,18 @@
+{% load crispy_forms_tags %}
+
+<div class="modal-header border-0 pb-0">
+    <h5 class="modal-title fw-bold"><i class="bi bi-lightning-charge me-2"></i> {{ project.name }}</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+
+<div class="modal-body p-4">
+    {% if description %}<p class="text-muted small">{{ description }}</p>{% endif %}
+    <form method="post" action="{{ action_url }}">
+        {% csrf_token %}
+        {{ form|crispy }}
+        <div class="dlux-modal-form-actions d-flex justify-content-end gap-2">
+            <button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="{{ submit_class }} rounded-pill">{{ submit_label }}</button>
+        </div>
+    </form>
+</div>

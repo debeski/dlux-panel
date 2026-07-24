@@ -2,7 +2,7 @@
 
 ## Part 1: Project Related
 ### Current Verified Snapshot:
-- Dedicated DjangoLux fleet control panel v0.1.0 has native scoped fleet UI and its own generated `composer-agent`.
+- Dedicated DjangoLux fleet control panel v0.1.3 has native scoped fleet UI and its own generated `composer-agent`.
 - Schema-v1 API runs under Uvicorn/ASGI and implements hashed enrollment/auth, long polls, monotonic events, snapshots, local reconciliation, capabilities, rotation, and revocation.
 - Typed actions cover DLUX image update/backup creation, safe restart, and audited recovery; remote restore/arbitrary execution are absent.
 
@@ -26,22 +26,26 @@
   - [ ] Enroll and self-update the control panel after initial administrative setup.
   - [ ] Pilot one noncritical project before Decrees and Trademarks.
 - **Priority 2:**
-  - [ ] Bump pin to `django-lux==1.5.4` once released so the baked-dlux badge actually renders (field is emitted but ignored on 1.5.3).
+  - [ ] After publication, bump this project's pin from 1.5.4 to `django-lux==1.5.6` for repaired self-pairing with visible validation.
+  - [ ] Pin forms to Dlux 1.5.6 and pair it via `/sys/control-panel/`.
   - [ ] Export `ENV DLUX_BAKED_VERSION` in Dockerfile(s) so runtime `get_baked_version()` stops reporting the activated version as baked.
   - [ ] Enroll the control panel's own agent in staging.
   - [ ] Add separate SSO project after the fleet deployment path stabilizes.
 - **Completed Recently:**
+  - [x] Rebuilt the panel as one page on `DluxTable`/`FilterView` with a dynamic-modal row context menu, retiring the detail/form pages and `project_add`/`project_edit` routes.
+  - [x] v0.1.3 enrollment pages copy canonical `BASE_URL`, preserving the public HTTPS origin across the internal HTTP proxy hop.
   - [x] Implemented fleet models/migration, scoped UI/actions, agent API, controlled batches, backup inspection, retention, and immutable break-glass audit.
   - [x] Added identical protocol fixtures and 13 control tests including three-wide batches and 50-agent ASGI concurrency.
   - [x] Added tag-driven release: `release-manifest.json`, `.github/workflows/release.yml` (image `debeski/dlux-panel`), and `tools/validate_project_release_manifest.py`.
   - [x] Adopted DjangoLux 1.5.3 `get_project_version`: `release-manifest.json` is the sole version source; retired root `VERSION` (→ `.xpose/VERSION`); validator now checks manifest==tag only.
   - [x] Landed `baked_dlux_version` end-to-end: validator injects it from the requirements pin (replacing the workflow grep), composer v1.2.3 + dlux v1.5.4 pass it through, dlux renders a "baked dlux" badge in the image-update review modal.
+  - [x] Prepared Dlux 1.5.6 visible pairing validation and Archive v1.1.7 with the corrected target pin.
 
 ### One-line info about last verified Tests:
-- 2026-07-24: project 22/23 GREEN (8 new release-manifest tests pass; `test_scaffold` dlux_settings assertion stale/pre-existing); composer 55/55 GREEN; dlux updater 77/77 GREEN.
+- 2026-07-24: panel 38/38 GREEN (14 new panel-UI tests: table/context-menu/modal endpoints/ops feed/deep link); rendered-HTML check confirms dlux table, filter, and modal triggers.
 
 ### One-line info about last time edited Docs:
-- 2026-07-24: added `docs/design-project-manifest-dlux-version.md` (proposed, unimplemented); operations.md documents manifest-as-version-source.
+- 2026-07-24: operations documents canonical HTTPS `BASE_URL` enrollment; design notes cover baked-version and pairing repairs.
 
 ## Part 2: Global
 ### Global Standard Helpers, Shortcuts, Info, etc.:

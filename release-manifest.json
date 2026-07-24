@@ -1,11 +1,13 @@
 {
   "schema_version": 1,
-  "version": "0.1.2",
-  "summary": "The release manifest is now the single source of the project version and also publishes the DjangoLux version baked into the image.",
+  "version": "0.1.3",
+  "summary": "Rebuilds the fleet panel as a single page on native DjangoLux tables, filters, and dynamic modals, and copies the configured public HTTPS control-panel URL for pairing.",
   "highlights": [
-    "release-manifest.json is the only project version source, read at runtime via get_project_version.",
-    "The published manifest label now carries the baked DjangoLux version, injected from the requirements pin.",
-    "Enrollment tokens pair from the UI with the control-panel URL, no redeploy required."
+    "The fleet is one page: a native DjangoLux data table with filtering, paging, and resizable columns.",
+    "Right-click a project for every action — view, edit, update, backup, restart, enrolment, rotate, revoke, recovery.",
+    "All project detail and forms open as dynamic modals; the separate detail and form pages are gone.",
+    "An in-flight strip keeps queued operations visible across the fleet after their modal closes.",
+    "The pairing URL comes from the canonical BASE_URL instead of the internal post-TLS request scheme."
   ],
-  "release_url": "https://github.com/debeski/dlux-panel/releases/tag/v0.1.2"
+  "release_url": "https://github.com/debeski/dlux-panel/releases/tag/v0.1.3"
 }

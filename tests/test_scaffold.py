@@ -12,7 +12,7 @@ class ProjectScaffoldTests(SimpleTestCase):
     def test_settings_uses_dlux_helper(self):
         settings_path = Path(__file__).resolve().parents[1] / "config" / "settings.py"
         contents = settings_path.read_text(encoding="utf-8")
-        self.assertIn("from dlux.utils import dlux_settings", contents)
+        self.assertRegex(contents, r"from dlux\.utils import [^\n]*\bdlux_settings\b")
         self.assertIn("dlux_settings(globals())", contents)
 
     def test_urls_mount_dlux_at_root(self):

@@ -1,52 +1,74 @@
-{% extends "dlux/base.html" %}
+{% extends "dlux/list_base.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+{% load render_table from django_tables2 %}
 
 {% block title %}Fleet{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
+<div class="container-fluid py-4" data-fleet-root
+     data-operations-url="{% url 'fleet:operations_active' %}"
+     {% if open_project %}data-open-project-url="{% url 'fleet:project_detail' open_project.pk %}"
+     data-open-project-name="{{ open_project.name }}"{% endif %}>
+
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
         <div>
-            <h1 class="mb-1">Fleet</h1>
-            <p class="text-muted mb-0">Current state relayed by each project's DLUX runtime.</p>
+            <h2 class="page-title mb-1"><i class="bi bi-diagram-3 me-2"></i> Fleet</h2>
+            <p class="text-muted mb-0">Current state relayed by each project's DLUX runtime. Right-click a row for its actions.</p>
         </div>
         <div class="d-flex gap-2">
-            {% if perms.fleet.run_fleet_batch %}<a class="btn btn-outline-primary" href="{% url 'fleet:batch_add' %}">Batch update</a>{% endif %}
-            {% if perms.fleet.add_managedproject %}<a class="btn btn-primary" href="{% url 'fleet:project_add' %}">Add project</a>{% endif %}
+            {% if perms.fleet.run_fleet_batch %}
+            <button type="button" class="btn btn-outline-primary rounded-pill"
+                    data-dynamic-modal="{% url 'fleet:batch_add' %}"
+                    data-modal-title="Batch update">
+                <i class="bi bi-layers me-1"></i> Batch update
+            </button>
+            {% endif %}
+            {% if perms.fleet.add_managedproject %}
+            <button type="button" class="btn btn-primary rounded-pill"
+                    data-dynamic-modal="{% url 'modal_manager' 'fleet' 'ManagedProject' 'new' %}"
+                    data-modal-title="Add project">
+                <i class="bi bi-plus-lg me-1"></i> Add project
+            </button>
+            {% endif %}
         </div>
     </div>
 
-    <div class="table-responsive">
-        <table class="table align-middle">
-            <thead>
-                <tr>
-                    <th>Project</th>
-                    <th>Agent</th>
-                    <th>Versions</th>
-                    <th>Update</th>
-                    <th>Backup</th>
-                    <th>Observed</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for project in projects %}
-                <tr>
-                    <td><a href="{% url 'fleet:project_detail' project.pk %}">{{ project.name }}</a><div class="small text-muted">{{ project.environment }}</div></td>
-                    <td>
-                        {% if project.agent.is_online %}<span class="badge text-bg-success">Online</span>
-                        {% elif project.agent.revoked_at %}<span class="badge text-bg-danger">Revoked</span>
-                        {% elif project.agent %}<span class="badge text-bg-secondary">Offline</span>
-                        {% else %}<span class="badge text-bg-warning">Not enrolled</span>{% endif %}
-                    </td>
-                    <td>{{ project.latest_snapshot.versions.application|default:"—" }}<div class="small text-muted">DLUX {{ project.latest_snapshot.versions.dlux|default:"—" }}</div></td>
-                    <td>{{ project.latest_snapshot.update_state.active_status|default:"—" }}</td>
-                    <td>{{ project.latest_snapshot.backup_summary.status|default:"—" }}</td>
-                    <td>{{ project.latest_snapshot.observed_at|date:"Y-m-d H:i:s"|default:"—" }}</td>
-                </tr>
-                {% empty %}
-                <tr><td colspan="6" class="text-center text-muted py-5">No managed projects are visible in your scope.</td></tr>
+    <div class="card border-0 shadow-sm rounded-4 mb-3 {% if not active_operations %}d-none{% endif %}"
+         data-operations-strip>
+        <div class="card-body py-3">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="spinner-border spinner-border-sm text-primary"></span>
+                <h6 class="mb-0">In flight</h6>
+                <span class="badge text-bg-secondary" data-operations-count>{{ active_operations|length }}</span>
+            </div>
+            <div class="d-flex flex-wrap gap-2" data-operations-list>
+                {% for operation in active_operations %}
+                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill"
+                        data-dynamic-modal="{% url 'fleet:project_detail' operation.project_id %}"
+                        data-modal-title="{{ operation.project.name }}">
+                    <span class="fw-semibold">{{ operation.project.name }}</span>
+                    <span class="text-muted">· {{ operation.action }}</span>
+                    <span class="badge text-bg-info ms-1">{{ operation.state }}</span>
+                </button>
                 {% endfor %}
-            </tbody>
-        </table>
+            </div>
+        </div>
     </div>
+
+    {% if filter %}
+    <div class="card border-0 shadow-sm rounded-4 mb-3"><div class="card-body">
+        {% crispy filter.form filter.form.helper %}
+    </div></div>
+    {% endif %}
+
+    <div class="card border-0 shadow-sm rounded-4"><div class="card-body">
+        {% render_table table %}
+    </div></div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+    {{ block.super }}
+    <script src="{% static 'fleet/fleet.js' %}" defer></script>
 {% endblock %}

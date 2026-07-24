@@ -1,0 +1,25 @@
+<div class="modal-header border-0 pb-0">
+    <h5 class="modal-title fw-bold text-warning-emphasis"><i class="bi bi-key-fill me-2"></i> Pairing token — {{ project.name }}</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+
+<div class="modal-body p-4">
+    <div class="alert alert-warning py-2 small">Shown once. Expires {{ expires_at|date:"Y-m-d H:i:s T" }}.</div>
+
+    <label class="form-label fw-semibold mb-1">Control panel URL</label>
+    <pre class="p-3 bg-body-tertiary text-wrap user-select-all rounded">{{ control_url }}</pre>
+
+    <label class="form-label fw-semibold mb-1">Pairing token</label>
+    <pre class="p-3 bg-body-tertiary text-wrap user-select-all rounded">{{ token }}</pre>
+
+    <p class="mb-1 small"><strong>Pair from the app's UI (no redeploy):</strong> open
+       <em>DjangoLux → Control Panel</em> in the target app, paste both values, and save.
+       The agent enrols over its local bridge and the tile turns
+       <span class="badge text-bg-success">Connected</span>.</p>
+    <p class="mb-0 text-muted small">Headless fallback: set <code>COMPOSER_CONTROL_URL</code> and
+       <code>COMPOSER_ENROLLMENT_TOKEN</code> on the <code>composer-agent</code> service before first boot.</p>
+
+    <div class="dlux-modal-form-actions d-flex justify-content-end">
+        <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Done</button>
+    </div>
+</div>

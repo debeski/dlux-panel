@@ -17,7 +17,7 @@ from validate_project_release_manifest import (  # noqa: E402
     validate_project_release_manifest,
 )
 
-REPOSITORY = "debeski/dlux-control-panel"
+REPOSITORY = "debeski/dlux-panel"
 
 
 def _manifest(tmp_path, **overrides):
