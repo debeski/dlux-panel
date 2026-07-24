@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "version": "0.1.5",
+  "version": "0.2.0",
   "summary": "Adds a table/cards layout toggle, real in-flight operation visibility with an auto-expiry safety net, a fully bilingual (English/Arabic) panel, and table refresh after add/edit and enrollment.",
   "highlights": [
     "Switch the fleet overview between a data table and informative cards, per user or a fleet-wide default.",
@@ -9,5 +9,5 @@
     "The whole fleet panel now translates to Arabic — table, cards, filters, modals, forms, and messages.",
     "Add, edit, and enrollment modals refresh the fleet table so changes appear without a manual reload."
   ],
-  "release_url": "https://github.com/debeski/dlux-panel/releases/tag/v0.1.5"
+  "release_url": "https://github.com/debeski/dlux-panel/releases/tag/v0.2.0"
 }
