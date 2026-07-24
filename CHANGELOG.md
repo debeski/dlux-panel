@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.1.4
+- **Restored Application Version Reporting**: Adopting `release-manifest.json` in v0.1.2 retired the root `VERSION` file that DjangoLux's `app_version()` reads, so the Updates card reported no version. `config/settings.py` now sets `DLUX_APP_VERSION = get_project_version(BASE_DIR)`, keeping the manifest as the single source.
+- **Single Image Reference**: Added `WEB_IMAGE=debeski/dlux-panel:latest` to `.secrets/.env` and corrected the two `composer-agent` fallbacks that still read `dlux_control:latest`, which made the agent poll an image published in no registry so no update was ever discovered.
+
 ## v0.1.3
 - **Single-Page Panel On Native Dlux Primitives**: Replaced the hand-rolled `<table>` and the separate detail/form pages with one `FleetOverviewView` built on `SingleTableMixin`/`FilterView`. New `ManagedProjectTable(DluxTable)` supplies badge columns plus a permission-gated row context menu whose every entry opens a Dlux dynamic modal — view (double-click), edit via the generic `modal_manager`, update, backup, restart, enrollment, rotate, revoke, and recovery. New `ManagedProjectFilter` adds search/environment/agent-state filtering, and pagination, per-page, and resizable columns now come from `DluxTable`. Project add/edit reuses `modal_manager`, so `project_add`/`project_edit` routes and `project_form.html` are retired to `.xpose/`.
 - **Modal Endpoints With Non-JS Fallbacks**: Detail, action, enrollment, and batch views return `{"html": …}` for the modal's `X-Requested-With` fetches and `{"success": true, "refresh_parent": true}` on completion, while plain navigation keeps the previous page/redirect behaviour so every route still works without JavaScript. Page templates are now thin shells including the same partials.

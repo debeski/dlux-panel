@@ -1,13 +1,11 @@
 {
   "schema_version": 1,
-  "version": "0.1.3",
-  "summary": "Rebuilds the fleet panel as a single page on native DjangoLux tables, filters, and dynamic modals, and copies the configured public HTTPS control-panel URL for pairing.",
+  "version": "0.1.4",
+  "summary": "Restores the application version in the Updates card and makes the deployment point at the published image so updates are discovered.",
   "highlights": [
-    "The fleet is one page: a native DjangoLux data table with filtering, paging, and resizable columns.",
-    "Right-click a project for every action — view, edit, update, backup, restart, enrolment, rotate, revoke, recovery.",
-    "All project detail and forms open as dynamic modals; the separate detail and form pages are gone.",
-    "An in-flight strip keeps queued operations visible across the fleet after their modal closes.",
-    "The pairing URL comes from the canonical BASE_URL instead of the internal post-TLS request scheme."
+    "The Updates card reports this project's version again, read from release-manifest.json.",
+    "WEB_IMAGE is set once in .secrets/.env, so every compose reference resolves to the published image.",
+    "The composer agent no longer polls an unpublished local image name, which silently hid every update."
   ],
-  "release_url": "https://github.com/debeski/dlux-panel/releases/tag/v0.1.3"
+  "release_url": "https://github.com/debeski/dlux-panel/releases/tag/v0.1.4"
 }

@@ -389,14 +389,14 @@ services:
       - --interval
       - "2"
       - --check-image
-      - ${WEB_IMAGE:-dlux_control:latest}
+      - ${WEB_IMAGE:-debeski/dlux-panel:latest}
       - --availability-file
       - /opt/dlux-runtime/state/image-available.json
       - --check-interval
       - "3600"
     environment:
       DOCKER_HOST: "tcp://docker-socket-proxy:2375"
-      WEB_IMAGE: "${WEB_IMAGE:-dlux_control:latest}"
+      WEB_IMAGE: "${WEB_IMAGE:-debeski/dlux-panel:latest}"
       COMPOSER_CONTROL_URL: "${COMPOSER_CONTROL_URL:-}"
       COMPOSER_ENROLLMENT_TOKEN: "${COMPOSER_ENROLLMENT_TOKEN:-}"
       COMPOSER_AGENT_STATE_DIR: "/var/lib/composer-agent"

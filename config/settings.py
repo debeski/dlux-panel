@@ -8,7 +8,7 @@ from pathlib import Path
 import logging
 from urllib.parse import urlparse
 from csp.constants import SELF, UNSAFE_EVAL, UNSAFE_INLINE
-from dlux.utils import get_secret, dlux_settings
+from dlux.utils import get_project_version, get_secret, dlux_settings
 
 
 WSGI_APPLICATION = "config.wsgi.application"
@@ -23,6 +23,9 @@ ALLOWED_URLS = [
     if url.strip()
 ]
 ROOT_URLCONF = "config.urls"
+# The Updates card reads DLUX_APP_VERSION (or a root VERSION file). This project
+# retired VERSION for release-manifest.json, so point it at the manifest.
+DLUX_APP_VERSION = get_project_version(BASE_DIR)
 DLUX_SETUP_GUARD_ALLOWED_PREFIXES = ("/api/agent/v1/",)
 DLUX_MIDDLEWARE = "fleet.middleware.AgentApiBoundaryMiddleware"
 

@@ -19,6 +19,7 @@
 
 ### Current Project's Unsolved Known Bugs:
 - Live Docker/network and control-panel self-update acceptance still require staging infrastructure.
+- Deployed stacks created before the `WEB_IMAGE` change still check `dlux_control:latest`; `docker compose up -d` (not `restart`) is required to recreate the agent with the registry image name.
 
 ### Incomplete Tasks:
 - **Priority 1:**
@@ -42,7 +43,7 @@
   - [x] Prepared Dlux 1.5.6 visible pairing validation and Archive v1.1.7 with the corrected target pin.
 
 ### One-line info about last verified Tests:
-- 2026-07-24: panel 38/38 GREEN (14 new panel-UI tests: table/context-menu/modal endpoints/ops feed/deep link); rendered-HTML check confirms dlux table, filter, and modal triggers.
+- 2026-07-24: panel 38/38 and Dlux 900/900 GREEN (14 panel-UI + 4 app_version-source tests); rendered-HTML check confirms dlux table, filter, and modal triggers.
 
 ### One-line info about last time edited Docs:
 - 2026-07-24: operations documents canonical HTTPS `BASE_URL` enrollment; design notes cover baked-version and pairing repairs.
