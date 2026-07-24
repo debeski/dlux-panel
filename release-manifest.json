@@ -7,5 +7,5 @@
     "The published manifest label now carries the baked DjangoLux version, injected from the requirements pin.",
     "Enrollment tokens pair from the UI with the control-panel URL, no redeploy required."
   ],
-  "release_url": "https://github.com/debeski/dlux-control-panel/releases/tag/v0.1.2"
+  "release_url": "https://github.com/debeski/dlux-panel/releases/tag/v0.1.2"
 }
