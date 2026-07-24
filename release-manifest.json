@@ -1,9 +1,11 @@
 {
   "schema_version": 1,
-  "version": "0.1.1",
-  "summary": "Pairing-First Enrollment UX Support.",
+  "version": "0.1.2",
+  "summary": "The release manifest is now the single source of the project version and also publishes the DjangoLux version baked into the image.",
   "highlights": [
-    "Pairing-First Enrollment UX Support"
+    "release-manifest.json is the only project version source, read at runtime via get_project_version.",
+    "The published manifest label now carries the baked DjangoLux version, injected from the requirements pin.",
+    "Enrollment tokens pair from the UI with the control-panel URL, no redeploy required."
   ],
-  "release_url": "https://github.com/debeski/dlux-control-panel/releases/tag/v0.1.1"
+  "release_url": "https://github.com/debeski/dlux-control-panel/releases/tag/v0.1.2"
 }

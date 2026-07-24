@@ -1,10 +1,26 @@
-"""Validate project release metadata before building a tagged image."""
+"""Validate project release metadata before building a tagged image.
+
+``release-manifest.json`` is the single source of truth for the project version;
+the running app reads the same value via ``dlux.utils.get_project_version`` (v1.5.3+).
+This validator confirms the manifest's version matches the pushed tag, resolves the
+pinned DjangoLux version, and emits the label payload for the image build.
+
+The baked DjangoLux version is injected here rather than committed: the manifest is
+hand-authored while the pinned version is a build-time fact, so injecting removes any
+chance of the two disagreeing.
+"""
 
 import argparse
 import base64
 import json
 import os
+import re
 from pathlib import Path
+
+_DLUX_PIN = re.compile(
+    r"^\s*django-lux(?:\[[^\]]*\])?\s*==\s*([0-9][0-9A-Za-z.\-]*)\s*$",
+    re.IGNORECASE,
+)
 
 
 class ProjectReleaseManifestError(ValueError):
@@ -18,6 +34,22 @@ def encode_project_release_manifest_label(manifest):
     return f"base64:{encoded}"
 
 
+def resolve_pinned_dlux_version(project_root):
+    """The exact ``django-lux`` version pinned in ``requirements.txt``."""
+    path = Path(project_root) / "requirements.txt"
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError as exc:
+        raise ProjectReleaseManifestError(str(exc)) from exc
+    for line in lines:
+        match = _DLUX_PIN.match(line.split("#", 1)[0])
+        if match:
+            return match.group(1)
+    raise ProjectReleaseManifestError(
+        "requirements.txt has no exact 'django-lux==<version>' pin"
+    )
+
+
 def _tag_version(tag):
     value = str(tag or "").strip()
     if value.startswith("refs/tags/"):
@@ -28,11 +60,9 @@ def _tag_version(tag):
 def validate_project_release_manifest(project_root, tag, repository):
     project_root = Path(project_root)
     manifest_path = project_root / "release-manifest.json"
-    version_path = project_root / "VERSION"
 
     try:
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-        file_version = version_path.read_text(encoding="utf-8").strip()
     except (OSError, json.JSONDecodeError) as exc:
         raise ProjectReleaseManifestError(str(exc)) from exc
 
@@ -53,10 +83,9 @@ def validate_project_release_manifest(project_root, tag, repository):
         errors.append("release-manifest.json requires a non-empty version")
     elif len(manifest_version.strip()) > 64:
         errors.append("release-manifest.json version exceeds 64 characters")
-    if manifest_version != file_version or manifest_version != tag_version:
+    if manifest_version != tag_version:
         errors.append(
-            f"version mismatch: manifest={manifest_version!r}, "
-            f"VERSION={file_version!r}, tag={tag_version!r}"
+            f"version mismatch: manifest={manifest_version!r}, tag={tag_version!r}"
         )
     if not isinstance(summary, str) or not summary.strip() or len(summary.strip()) > 1000:
         errors.append("release-manifest.json summary must contain 1-1000 characters")
@@ -96,18 +125,24 @@ def main(argv=None):
             tag=args.tag,
             repository=args.repository,
         )
+        dlux_version = resolve_pinned_dlux_version(args.project_root)
     except ProjectReleaseManifestError as exc:
         for error in str(exc).splitlines():
             print(f"::error::{error}")
         return 1
 
-    compact = json.dumps(manifest, separators=(",", ":"), ensure_ascii=True)
-    label = encode_project_release_manifest_label(manifest)
+    published = {**manifest, "baked_dlux_version": dlux_version}
+    compact = json.dumps(published, separators=(",", ":"), ensure_ascii=True)
+    label = encode_project_release_manifest_label(published)
     if args.github_output:
         with open(args.github_output, "a", encoding="utf-8") as output:
             output.write(f"json={compact}\n")
             output.write(f"label={label}\n")
-    print(f"Validated project release manifest v{manifest['version']}")
+            output.write(f"dlux_version={dlux_version}\n")
+    print(
+        f"Validated project release manifest v{manifest['version']} "
+        f"(baked dlux v{dlux_version})"
+    )
     return 0
 
 

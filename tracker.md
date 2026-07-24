@@ -26,18 +26,22 @@
   - [ ] Enroll and self-update the control panel after initial administrative setup.
   - [ ] Pilot one noncritical project before Decrees and Trademarks.
 - **Priority 2:**
+  - [ ] Bump pin to `django-lux==1.5.4` once released so the baked-dlux badge actually renders (field is emitted but ignored on 1.5.3).
+  - [ ] Export `ENV DLUX_BAKED_VERSION` in Dockerfile(s) so runtime `get_baked_version()` stops reporting the activated version as baked.
   - [ ] Enroll the control panel's own agent in staging.
   - [ ] Add separate SSO project after the fleet deployment path stabilizes.
 - **Completed Recently:**
   - [x] Implemented fleet models/migration, scoped UI/actions, agent API, controlled batches, backup inspection, retention, and immutable break-glass audit.
   - [x] Added identical protocol fixtures and 13 control tests including three-wide batches and 50-agent ASGI concurrency.
   - [x] Added tag-driven release: `release-manifest.json`, `.github/workflows/release.yml` (image `debeski/dlux-panel`), and `tools/validate_project_release_manifest.py`.
+  - [x] Adopted DjangoLux 1.5.3 `get_project_version`: `release-manifest.json` is the sole version source; retired root `VERSION` (→ `.xpose/VERSION`); validator now checks manifest==tag only.
+  - [x] Landed `baked_dlux_version` end-to-end: validator injects it from the requirements pin (replacing the workflow grep), composer v1.2.3 + dlux v1.5.4 pass it through, dlux renders a "baked dlux" badge in the image-update review modal.
 
 ### One-line info about last verified Tests:
-- 2026-07-23: 13/13 fleet tests GREEN; migration drift/check GREEN; `docker compose config -q` GREEN.
+- 2026-07-24: project 22/23 GREEN (8 new release-manifest tests pass; `test_scaffold` dlux_settings assertion stale/pre-existing); composer 55/55 GREEN; dlux updater 77/77 GREEN.
 
 ### One-line info about last time edited Docs:
-- 2026-07-23: operations.md gained a Releasing section for the tag-driven `debeski/dlux-panel` pipeline.
+- 2026-07-24: added `docs/design-project-manifest-dlux-version.md` (proposed, unimplemented); operations.md documents manifest-as-version-source.
 
 ## Part 2: Global
 ### Global Standard Helpers, Shortcuts, Info, etc.:

@@ -3,7 +3,7 @@ name: dlux_control
 x-environment:
   # Database settings
   &de
-  WEB_IMAGE: "${WEB_IMAGE:-dlux_control:latest}"
+  WEB_IMAGE: "${WEB_IMAGE:-debeski/dlux-panel:latest}"
   POSTGRES_DB: "${POSTGRES_DB:-dlux_control_db}"
   POSTGRES_PORT: "5432"
   POSTGRES_HOST: "db"
@@ -63,7 +63,7 @@ services:
       - dlux_control_internal
 
   smtp-relay:
-    image: ${WEB_IMAGE:-dlux_control:latest}
+    image: ${WEB_IMAGE:-debeski/dlux-panel:latest}
     restart: always
     entrypoint: []
     command: ["python", "-m", "tools.smtp_relay"]
@@ -92,7 +92,7 @@ services:
 
   # DjangoLux updater start
   dlux-updater:
-    image: ${WEB_IMAGE:-dlux_control:latest}
+    image: ${WEB_IMAGE:-debeski/dlux-panel:latest}
     restart: always
     command: ["python", "-m", "tools.dlux_runtime_supervisor", "--no-watch", "--", "bash", "-c", "python manage.py migrator && exec python manage.py dlux_update_worker"]
     entrypoint: ["/app/entrypoint.sh"]
@@ -204,7 +204,7 @@ services:
       - dlux_control_internal
 
   web:
-    image: ${WEB_IMAGE:-dlux_control:latest}
+    image: ${WEB_IMAGE:-debeski/dlux-panel:latest}
     restart: always
     command: >
       python -m tools.dlux_runtime_supervisor -- bash -c ' if [ "$$DEBUG_STATUS" = "True" ]; then
@@ -250,7 +250,7 @@ services:
       - dlux_control_internal
 
   celery:
-    image: ${WEB_IMAGE:-dlux_control:latest}
+    image: ${WEB_IMAGE:-debeski/dlux-panel:latest}
     restart: always
     command: ["python", "-m", "tools.dlux_runtime_supervisor", "--", "python", "-m", "celery", "-A", "config", "worker", "-B", "--loglevel=info"]
     entrypoint: ["/app/entrypoint.sh"]
