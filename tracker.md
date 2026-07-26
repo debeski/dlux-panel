@@ -2,9 +2,11 @@
 
 ## Part 1: Project Related
 ### Current Verified Snapshot:
-- Dedicated DjangoLux fleet control panel (v0.1.4 released; v0.2.0 pending) has native scoped fleet UI and its own generated `composer-agent`.
+- Dedicated DjangoLux fleet control panel (v0.2.0 released; v0.2.1 pending, DjangoLux 1.5.9) has native scoped fleet UI and its own generated `composer-agent`.
 - Schema-v1 API runs under Uvicorn/ASGI and implements hashed enrollment/auth, long polls, monotonic events, snapshots, local reconciliation, capabilities, rotation, and revocation.
 - Typed actions cover DLUX image update/backup creation, safe restart, and audited recovery; remote restore/arbitrary execution are absent.
+- DLUX provides configurable human-login/OTP throttles and mandatory TOTP; HAProxy now sets X-Forwarded-Proto/For across the deployed projects.
+- Live capture confirms pfSense/HAProxy reaches the panel VM from `192.168.20.1` and Docker preserves that source through Caddy ingress.
 
 ### Current Project Adopted Standards:
 - Use native DjangoLux scopes, groups, permissions, activity logging, translations, and backend authorization.
@@ -16,23 +18,32 @@
 
 ### Cross-Cutting Audits if any:
 - 50 simultaneous one-second ASGI long polls complete in about 1.6 seconds in the test environment.
+- 2026-07-26 security review covered panel/agent auth, HAProxy→Caddy trust, public routes, Docker authority, defaults, and Composer's unresolved audit findings.
 
 ### Current Project's Unsolved Known Bugs:
 - Live Docker/network and control-panel self-update acceptance still require staging infrastructure.
 - Deployed stacks created before the `WEB_IMAGE` change still check `dlux_control:latest`; `docker compose up -d` (not `restart`) is required to recreate the agent with the registry image name.
+- Legacy pgAdmin removal is in progress, and Caddy still publicly serves `/_update/log.txt`.
+- Deploy `CADDY_TRUSTED_PROXIES=192.168.20.1/32`; machine-API limits and backend firewall isolation still need live verification.
+- Composer still has mutable image refs and host-root-equivalent POST-enabled Docker API authority.
 
 ### Incomplete Tasks:
 - **Priority 1:**
+  - [ ] Complete pgAdmin removal and restrict the public deploy-log route.
+  - [ ] Publish/deploy Composer v1.2.7 and reduce Docker API authority before expanding production control.
+  - [ ] Set deployed `CADDY_TRUSTED_PROXIES=192.168.20.1/32`; verify machine-API limits and backend firewall isolation live.
   - [ ] Run staging end-to-end update and outage/replay matrix.
   - [ ] Enroll and self-update the control panel after initial administrative setup.
   - [ ] Pilot one noncritical project before Decrees and Trademarks.
 - **Priority 2:**
-  - [ ] After publication, bump this project's pin from 1.5.4 to `django-lux==1.5.6` for repaired self-pairing with visible validation.
-  - [ ] Pin forms to Dlux 1.5.6 and pair it via `/sys/control-panel/`.
+  - [ ] Pin forms to DjangoLux 1.5.9 and pair it via `/sys/control-panel/`.
   - [ ] Export `ENV DLUX_BAKED_VERSION` in Dockerfile(s) so runtime `get_baked_version()` stops reporting the activated version as baked.
   - [ ] Enroll the control panel's own agent in staging.
   - [ ] Add separate SSO project after the fleet deployment path stabilizes.
 - **Completed Recently:**
+  - [x] Made project secrets fail closed in production, set `.secrets/.env` to 0600, and added strict configurable Caddy proxy trust.
+  - [x] Composer v1.2.7 pins enrolled control URLs and rejects credentialed redirects.
+  - [x] HAProxy now supplies X-Forwarded-Proto and X-Forwarded-For for this panel and the other deployed projects.
   - [x] Table/cards overview toggle via dlux Options (`fleet/dlux_options.py` card + settings tile, `fleet/layouts.py` resolver); cards reuse the row context menu.
   - [x] Operation observability: feed/status expose phase, last-event age, overdue, agent online/last-seen; strip renders them; `expire_stale_operations` beat task auto-fails stuck ops past `deadline_at`+grace; add/edit/enrollment modals refresh the table.
   - [x] Localized the whole fleet panel en/ar via `fleet/translations.py` (per-request header/badge relabel); added form-only project modal (`show_table=False`) and click-to-copy enrollment fields.
@@ -46,10 +57,10 @@
   - [x] Prepared Dlux 1.5.6 visible pairing validation and Archive v1.1.7 with the corrected target pin.
 
 ### One-line info about last verified Tests:
-- 2026-07-25: panel 53/53 GREEN (incl. layout table/cards toggle, per-user+global default, cards context menu, operation-sweep, live-status, Arabic); Dlux 909/909 GREEN.
+- 2026-07-26: panel 53/53 and Composer 125/125 GREEN; production secret failure, Compose resolution, and Caddy validation also pass.
 
 ### One-line info about last time edited Docs:
-- 2026-07-24: operations documents canonical HTTPS `BASE_URL` enrollment; design notes cover baked-version and pairing repairs.
+- 2026-07-26: operations documents project-only production secrets, Caddy/pfSense trust, and Composer URL pinning.
 
 ## Part 2: Global
 ### Global Standard Helpers, Shortcuts, Info, etc.:

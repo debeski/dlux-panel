@@ -1,10 +1,22 @@
 # Operations
 
+## Front proxy (pfSense/HAProxy)
+
+The TLS-terminating HAProxy frontend must overwrite `X-Forwarded-Proto` (action *http-request header set*, name `X-Forwarded-Proto`, fmt `https`, no condition) and append the client IP through **Use 'forwardfor' option**. These HAProxy settings are necessary but separate from Caddy's trust decision.
+
+`CADDY_TRUSTED_PROXIES` is a Caddy/Compose variable, not a DjangoLux setting. Set it in `.secrets/.env` to the pfSense/HAProxy address as seen by Caddy, using a host CIDR such as `192.168.20.1/32`; use the actual address, not a client address from HAProxy statistics. The checked-in `private_ranges` default preserves existing deployments but is broader than a single proxy. Caddy also enables `trusted_proxies_strict`, which evaluates an appended `X-Forwarded-For` chain from right to left.
+
+Allow the published Caddy backend port through the host firewall only from pfSense/HAProxy. After changing the variable, recreate Caddy so its environment is updated: `docker compose --env-file .secrets/.env up -d --force-recreate caddy`.
+
+## Production secrets
+
+This project requires `DJANGO_SECRET_KEY`, `POSTGRES_PASSWORD`, and `ADMIN_PASS` in its secrets file; Compose stops during interpolation if any is absent. Django settings also reject a missing Django or database secret whenever `DEBUG_STATUS=False`, while direct non-Compose development retains explicit development-only defaults. Keep the file private with `chmod 600 .secrets/.env`. These requirements apply only to this panel repository.
+
 ## Enrollment and availability
 
 Create a `ManagedProject` in its native DLUX scope, then create an enrollment token from its project page. Tokens are single-use and expire after 15 minutes. The displayed control URL comes from the panel's canonical `BASE_URL`; production must set it to the public HTTPS origin, such as `https://dlux.eidc.gov.ly`, so an internal HTTP proxy hop cannot produce an invalid pairing URL. Paste that URL and token into the target application's `/sys/control-panel/` page. The resulting random bearer secret persists in that project's dedicated agent-state volume; the panel stores only its hash.
 
-Credential rotation is issued as a typed command. The server stages a pending hash, the agent persists the new secret in SQLite, confirms with it, and only then promotes it and revokes the old credential. Interrupted confirmations replay from durable state. Revocation blocks central traffic immediately without disabling local DLUX updates.
+Credential rotation is issued as a typed command. The server stages a pending hash, the agent persists the new secret in SQLite, confirms with it, and only then promotes it and revokes the old credential. Interrupted confirmations replay from durable state. Composer 1.2.7 pins the normalized control URL after enrollment and rejects redirects; changing panels requires revocation/re-enrollment or an explicit local reset of the agent-state volume. Revocation blocks central traffic immediately without disabling local DLUX updates.
 
 ## Updates, backups, and restart
 

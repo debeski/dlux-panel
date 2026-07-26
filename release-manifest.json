@@ -1,13 +1,10 @@
 {
   "schema_version": 1,
-  "version": "0.2.0",
-  "summary": "Adds a table/cards layout toggle, real in-flight operation visibility with an auto-expiry safety net, a fully bilingual (English/Arabic) panel, and table refresh after add/edit and enrollment.",
+  "version": "0.2.1",
+  "summary": "Adds strict configurable front-proxy trust and fails closed when required production secrets are missing.",
   "highlights": [
-    "Switch the fleet overview between a data table and informative cards, per user or a fleet-wide default.",
-    "In-flight operations show phase, elapsed time, agent online state, and an overdue flag instead of a bare badge.",
-    "Stuck operations past their deadline are auto-failed by a Celery-beat sweep, so the strip never hangs forever.",
-    "The whole fleet panel now translates to Arabic — table, cards, filters, modals, forms, and messages.",
-    "Add, edit, and enrollment modals refresh the fleet table so changes appear without a manual reload."
+    "Caddy validates forwarded client data against configured proxy sources using strict right-to-left parsing.",
+    "Production startup now requires explicit Django, database, and administrator secrets."
   ],
-  "release_url": "https://github.com/debeski/dlux-panel/releases/tag/v0.2.0"
+  "release_url": "https://github.com/debeski/dlux-panel/releases/tag/v0.2.1"
 }

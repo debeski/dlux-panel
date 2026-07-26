@@ -29,8 +29,23 @@ DLUX_APP_VERSION = get_project_version(BASE_DIR)
 DLUX_SETUP_GUARD_ALLOWED_PREFIXES = ("/api/agent/v1/",)
 DLUX_MIDDLEWARE = "fleet.middleware.AgentApiBoundaryMiddleware"
 
-SECRET_KEY = get_secret("DJANGO_SECRET_KEY", "DJANGO_SECRET_KEY") or "insecure-temporary-dev-only-key-change-me-now"
 DEBUG = os.getenv("DEBUG_STATUS", "True").lower() == "true"
+
+
+def required_production_secret(secret_name, env_name, development_default):
+    value = get_secret(secret_name, env_name)
+    if value:
+        return value
+    if DEBUG:
+        return development_default
+    raise RuntimeError(f"{env_name} is required when DEBUG_STATUS=False.")
+
+
+SECRET_KEY = required_production_secret(
+    "DJANGO_SECRET_KEY",
+    "DJANGO_SECRET_KEY",
+    "insecure-temporary-dev-only-key-change-me-now",
+)
 
 # Security & Origins configuration
 is_secure = BASE_URL.startswith("https://")
@@ -126,7 +141,9 @@ DATABASES = {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": os.getenv("POSTGRES_DB", "dlux_control_db"),
         "USER": os.getenv("POSTGRES_USER", "admin"),
-        "PASSWORD": get_secret("POSTGRES_PASSWORD", "POSTGRES_PASSWORD") or "admin_pass",
+        "PASSWORD": required_production_secret(
+            "POSTGRES_PASSWORD", "POSTGRES_PASSWORD", "admin_pass"
+        ),
         "HOST": os.getenv("POSTGRES_HOST", "db"),
         "PORT": os.getenv("POSTGRES_PORT", "5432"),
     }

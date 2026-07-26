@@ -1,0 +1,266 @@
+{
+  "format": "django-lux.system-settings",
+  "version": 1,
+  "dlux_version": "1.5.6",
+  "settings": {
+    "system_names": {
+      "ar": "لوحة تحكم DLux",
+      "en": "DLux Control Panel"
+    },
+    "logo": "",
+    "favicon": "",
+    "home_url": "/fleet/",
+    "default_language": "ar",
+    "default_theme": "mono",
+    "allowed_themes": [
+      "mono",
+      "dark",
+      "gothic"
+    ],
+    "allow_user_theme_override": true,
+    "allowed_fonts": [
+      "cairo",
+      "alexandria"
+    ],
+    "default_fonts": {},
+    "allow_user_font_override": true,
+    "allow_user_language_override": true,
+    "default_table_density": "balanced",
+    "default_form_density": "balanced",
+    "default_modal_size": "standard",
+    "sticky_table_headers": true,
+    "resizable_table_columns": true,
+    "zebra_striping": true,
+    "options_style": "tabs",
+    "footer_enabled": true,
+    "footer_text": "جميع الحقوق محفوظة 2026 الدبسكي",
+    "footer_link_text": "",
+    "footer_link_url": "",
+    "email_2fa": false,
+    "forgot_password_enabled": false,
+    "prevent_multiple_active_sessions": true,
+    "login_lockout_enabled": true,
+    "login_lockout_threshold": 3,
+    "login_lockout_window_minutes": 10,
+    "login_lockout_duration_minutes": 10,
+    "enforce_strong_passwords": false,
+    "strong_password_min_length": 12,
+    "purge_session_on_exit": true,
+    "inactivity_timeout_enabled": true,
+    "inactivity_timeout_minutes": 10,
+    "client_ip_config": {
+      "mode": "x_forwarded_for",
+      "trusted_proxy_hops": 2,
+      "custom_header": ""
+    },
+    "public_root": false,
+    "public_root_split_enabled": false,
+    "public_root_url": "/fleet/",
+    "public_root_theme": "",
+    "public_root_title": "",
+    "public_root_meta_description": "",
+    "show_titlebar_on_public": false,
+    "show_sidebar_on_public": false,
+    "public_registration_enabled": false,
+    "registration_activation_mode": "auto_login_after_verify",
+    "registration_throttle_enabled": false,
+    "honeypot_enabled": true,
+    "privacy_policy_url": "",
+    "terms_url": "",
+    "privacy_notice_text": "",
+    "registration_require_consent": false,
+    "email_config": {
+      "transport": "direct",
+      "secret_storage": "env",
+      "provider_preset": "custom",
+      "host": "",
+      "port": 587,
+      "use_tls": false,
+      "use_ssl": false,
+      "username": "",
+      "default_from_email": "",
+      "password_configured": false,
+      "failure_notification_recipients": []
+    },
+    "languages": {
+      "en": {
+        "name": "English",
+        "dir": "ltr",
+        "flag": "🇬🇧"
+      },
+      "ar": {
+        "name": "العربية",
+        "dir": "rtl",
+        "flag": "🇱🇾"
+      }
+    },
+    "translations_override": {},
+    "sidebar_config": {
+      "enabled": false,
+      "home_url_name": null,
+      "entries": [],
+      "enable_reorder": true,
+      "show_toolbar": true,
+      "show_icons": true,
+      "density": "balanced",
+      "allow_user_density": true,
+      "collapse_mode": "icons"
+    },
+    "navbar_config": {
+      "enabled": false,
+      "default_mode": "hierarchy",
+      "allow_user_mode_override": true,
+      "root": {
+        "mode": "neutral",
+        "url_name": ""
+      },
+      "hierarchy": {
+        "nodes": []
+      }
+    },
+    "log_config": {
+      "enabled": true,
+      "user": {
+        "enabled": true,
+        "default_actions": {
+          "create": true,
+          "update": true,
+          "delete": true
+        },
+        "retention_days": 0,
+        "models": {}
+      },
+      "system": {
+        "enabled": true,
+        "default_actions": {
+          "create": true,
+          "update": true,
+          "delete": true
+        },
+        "retention_days": 0,
+        "models": {}
+      },
+      "audit": {
+        "enabled": true,
+        "immutable": true,
+        "retention_days": 0,
+        "events": {
+          "login_success": true,
+          "login_failed": true,
+          "logout": true,
+          "lockout": true,
+          "password_change": true,
+          "2fa_change": true,
+          "2fa_failed": true,
+          "session_revoke": true,
+          "trusted_device_change": true,
+          "permission_denied": true,
+          "dlux_update_check": true,
+          "dlux_update_apply": true,
+          "dlux_update_rollback": true
+        }
+      }
+    },
+    "profile_config": {
+      "show_completion_widget": true,
+      "show_session_device_cards": true,
+      "show_activity_feed": true,
+      "security_nudges": "subtle",
+      "allow_user_home_url": false,
+      "onboarding_enabled": false,
+      "onboarding_options": {
+        "theme": true,
+        "language": true,
+        "fonts": true
+      }
+    },
+    "backup_config": {
+      "scheduled_enabled": false,
+      "schedule_interval_hours": 144,
+      "retention_days": 14,
+      "max_backups_to_keep": 2,
+      "auto_export_target": "dlux_backups",
+      "use_celery": true,
+      "exclude_models": []
+    },
+    "titlebar_config": {
+      "show_title": true,
+      "show_logo": true,
+      "show_home_button": true,
+      "hide_on_public_unauthenticated_index": true,
+      "buttons_shape": "circle",
+      "home_shape": "circle",
+      "title_align": "center",
+      "title_size": "lg",
+      "height": "balanced",
+      "surface": "glass",
+      "logo_treatment": "none",
+      "logo_treatment_shape": "soft",
+      "user_hub_style": "dropdown",
+      "show_language_switcher": true,
+      "actions_order": [
+        "notifications",
+        "home",
+        "profile",
+        "help",
+        "users",
+        "activity",
+        "reports",
+        "settings",
+        "auth"
+      ],
+      "global_search_mode": "disabled",
+      "global_search_include_data": false
+    },
+    "notification_config": {
+      "enabled": true,
+      "flash": {
+        "enabled": true,
+        "position": "top_center",
+        "size": "balanced",
+        "text_size": "md",
+        "timeout_ms": 3200,
+        "max_visible": 3
+      },
+      "drawer": {
+        "enabled": true,
+        "badge_enabled": true,
+        "preview_limit": 8
+      },
+      "bridge": {
+        "django_messages_enabled": true
+      },
+      "email": {
+        "enabled": false,
+        "default": false
+      },
+      "retention": {
+        "default_expiry_days": 30
+      },
+      "automatic": {
+        "scoped_model_crud": true,
+        "create": true,
+        "update": "summary",
+        "delete": true,
+        "actor_flash_actions": [
+          "create",
+          "delete",
+          "error"
+        ],
+        "watchable": true
+      }
+    },
+    "login_config": {
+      "style": "fullpage",
+      "show_logo": true,
+      "banner_color": "",
+      "logo_treatment": "none",
+      "logo_treatment_shape": "soft",
+      "hero_message": {
+        "en": "# DLux Control Panel",
+        "ar": "# لوحة تحكم DLux"
+      }
+    },
+    "extra_config": {}
+  }
+}

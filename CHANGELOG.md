@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.2.1
+- **Strict Front-Proxy Trust**: Added configurable `CADDY_TRUSTED_PROXIES` plus right-to-left strict parsing so Caddy accepts forwarded client/protocol data only from configured proxy sources.
+- **Required Production Secrets**: Removed Compose placeholder credentials, made missing production Django/database secrets fatal, and documented mode `0600` for `.secrets/.env`.
+
 ## v0.2.0
 - **Table Or Cards Fleet View**: Added a table/cards layout toggle for the overview, using DjangoLux's Options primitives. `fleet/dlux_options.py` registers a per-user picker card (`register_card`) and a superuser default tile (`register_app_settings`); `fleet/layouts.py` resolves per-user override → global default (`SystemSettings.extra_config['app']`) → table. The new card grid shows each project's name, environment, agent state, versions, and update/backup state, and carries the same permission-gated right-click context menu as the table rows (`data-dlux-context` + `data-dlux-actions`).
 - **Operation Observability**: In-flight operations were a bare state badge, so an image update that stalled at `delivered` (its agent gone during the container recreate it triggers) looked identical to a hang. `ActiveOperationsView` and `OperationStatusView` now expose the latest event phase, seconds since the last event, an `overdue` flag past `deadline_at`, and the agent's online/last-seen state. The strip renders per-operation phase, elapsed clock, an agent online/offline dot, red `overdue` styling, and a note explaining the expected app/agent restart during a recreate; the detail modal gains a Phase column and a snapshot `observed … ago` age.

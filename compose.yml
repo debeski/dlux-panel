@@ -39,7 +39,7 @@ services:
     environment:
       <<: *de
       POSTGRES_USER: ${POSTGRES_USER:-admin}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-admin_pass}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the project secrets file}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -70,8 +70,8 @@ services:
     environment:
       <<: *de
       POSTGRES_USER: ${POSTGRES_USER:-admin}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-admin_pass}
-      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-local_secret}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the project secrets file}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?Set DJANGO_SECRET_KEY in the project secrets file}
       DJANGO_SETTINGS_MODULE: "config.settings"
       SMTP_RELAY_LISTEN_HOST: "0.0.0.0"
       SMTP_RELAY_LISTEN_PORT: "1025"
@@ -104,9 +104,9 @@ services:
     environment:
       <<: *de
       POSTGRES_USER: ${POSTGRES_USER:-admin}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-admin_pass}
-      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-local_secret}
-      ADMIN_PASS: ${ADMIN_PASS:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the project secrets file}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?Set DJANGO_SECRET_KEY in the project secrets file}
+      ADMIN_PASS: ${ADMIN_PASS:?Set ADMIN_PASS in the project secrets file}
     healthcheck:
       test: ["CMD", "python", "-m", "dlux.updater.health"]
       interval: 10s
@@ -182,6 +182,7 @@ services:
     environment:
       CADDY_SITE_ADDRESS: "${CADDY_SITE_ADDRESS:-:80}"
       CADDY_MAX_SIZE: "${CADDY_MAX_SIZE:-10MB}"
+      CADDY_TRUSTED_PROXIES: "${CADDY_TRUSTED_PROXIES:-private_ranges}"
     volumes:
       - ./.proxy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
@@ -228,9 +229,9 @@ services:
     environment:
       <<: *de
       POSTGRES_USER: ${POSTGRES_USER:-admin}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-admin_pass}
-      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-local_secret}
-      ADMIN_PASS: ${ADMIN_PASS:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the project secrets file}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?Set DJANGO_SECRET_KEY in the project secrets file}
+      ADMIN_PASS: ${ADMIN_PASS:?Set ADMIN_PASS in the project secrets file}
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/', timeout=5).read()"]
       interval: 30s
@@ -262,9 +263,9 @@ services:
     environment:
       <<: *de
       POSTGRES_USER: ${POSTGRES_USER:-admin}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-admin_pass}
-      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-local_secret}
-      ADMIN_PASS: ${ADMIN_PASS:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the project secrets file}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?Set DJANGO_SECRET_KEY in the project secrets file}
+      ADMIN_PASS: ${ADMIN_PASS:?Set ADMIN_PASS in the project secrets file}
     healthcheck:
       test: ["CMD", "python", "-m", "celery", "-A", "config", "inspect", "ping"]
       interval: 30s
@@ -277,66 +278,6 @@ services:
       redis:
         condition: service_healthy
       dlux-updater:
-        condition: service_healthy
-    networks:
-      - internal
-
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    restart: unless-stopped
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@local.com}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:80').read()"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    depends_on:
-      db:
-        condition: service_healthy
-    networks:
-      - internal
-
-  db-backup:
-    image: postgres:17
-    restart: always
-    command: >
-      bash -c ' while true; do
-          export PGPASSWORD=$$POSTGRES_PASSWORD
-          backup_file="/.backups/backup_$$(date +%Y-%m-%d_%H-%M-%S).pgdump"
-          echo "Starting backup: $$backup_file"
-          attempts=0
-          max_attempts=5
-          until pg_dump -Fc -h $$POSTGRES_HOST -U $$POSTGRES_USER $$POSTGRES_DB -f $$backup_file || [ $$attempts -ge $$max_attempts ]; do
-              echo "pg_dump failed, retrying..."
-              attempts=$$((attempts+1))
-              sleep 5
-          done
-          if [ $$attempts -ge $$max_attempts ]; then
-              echo "Backup failed after $$attempts attempts" >&2
-              rm -f $$backup_file
-          else
-              echo "Backup successful: $$backup_file"
-              cd /.backups && ls -tp *.pgdump | grep -v "/$$" | tail -n +4 | xargs -I {} rm -- {}
-          fi
-          sleep $$BACKUP_INTERVAL
-      done'
-    volumes:
-      - ./.backups/:/.backups:rw
-    environment:
-      <<: *de
-      POSTGRES_USER: ${POSTGRES_USER:-admin}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-admin_pass}
-    healthcheck:
-      test: ["CMD-SHELL", "[ -d /.backups ] || exit 1"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-    depends_on:
-      db:
         condition: service_healthy
     networks:
       - internal

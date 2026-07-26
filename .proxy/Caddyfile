@@ -23,6 +23,10 @@
 {
 	# TLS handled elsewhere by default; never attempt ACME here.
 	auto_https off
+	servers {
+		trusted_proxies static {$CADDY_TRUSTED_PROXIES:private_ranges}
+		trusted_proxies_strict
+	}
 }
 
 {$CADDY_SITE_ADDRESS::80} {
