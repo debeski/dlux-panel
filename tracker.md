@@ -2,7 +2,7 @@
 
 ## Part 1: Project Related
 ### Current Verified Snapshot:
-- Dedicated DjangoLux fleet control panel (v0.2.0 released; v0.2.1 pending, DjangoLux 1.5.9) has native scoped fleet UI and its own generated `composer-agent`.
+- Dedicated DjangoLux fleet control panel (v0.2.1 released; v0.2.2 pending, DjangoLux 1.5.9) has native scoped fleet UI and its own generated `composer-agent`.
 - Schema-v1 API runs under Uvicorn/ASGI and implements hashed enrollment/auth, long polls, monotonic events, snapshots, local reconciliation, capabilities, rotation, and revocation.
 - Typed actions cover DLUX image update/backup creation, safe restart, and audited recovery; remote restore/arbitrary execution are absent.
 - DLUX provides configurable human-login/OTP throttles and mandatory TOTP; HAProxy now sets X-Forwarded-Proto/For across the deployed projects.
@@ -30,7 +30,7 @@
 ### Incomplete Tasks:
 - **Priority 1:**
   - [ ] Complete pgAdmin removal and restrict the public deploy-log route.
-  - [ ] Publish/deploy Composer v1.2.7 and reduce Docker API authority before expanding production control.
+  - [ ] Publish/deploy Composer v1.2.8 and reduce Docker API authority before expanding production control.
   - [ ] Set deployed `CADDY_TRUSTED_PROXIES=192.168.20.1/32`; verify machine-API limits and backend firewall isolation live.
   - [ ] Run staging end-to-end update and outage/replay matrix.
   - [ ] Enroll and self-update the control panel after initial administrative setup.
@@ -40,7 +40,11 @@
   - [ ] Export `ENV DLUX_BAKED_VERSION` in Dockerfile(s) so runtime `get_baked_version()` stops reporting the activated version as baked.
   - [ ] Enroll the control panel's own agent in staging.
   - [ ] Add separate SSO project after the fleet deployment path stabilizes.
+  - [ ] Browser-validate single-title fleet modals and persistent action footers; the in-app browser had no active session.
 - **Completed Recently:**
+  - [x] Fleet AJAX partials now rely on one DjangoLux shell title/body/footer and explicitly pin submit/cancel/Done action bars in the persistent footer.
+  - [x] Composer v1.2.8 coalesces unsent snapshots to the latest value and collapses existing backlogs at startup.
+  - [x] Replaced button-like enrollment values with selectable read-only inputs and made clipboard rejection fall back to legacy copy.
   - [x] Made project secrets fail closed in production, set `.secrets/.env` to 0600, and added strict configurable Caddy proxy trust.
   - [x] Composer v1.2.7 pins enrolled control URLs and rejects credentialed redirects.
   - [x] HAProxy now supplies X-Forwarded-Proto and X-Forwarded-For for this panel and the other deployed projects.
@@ -57,10 +61,10 @@
   - [x] Prepared Dlux 1.5.6 visible pairing validation and Archive v1.1.7 with the corrected target pin.
 
 ### One-line info about last verified Tests:
-- 2026-07-26: panel 53/53 and Composer 125/125 GREEN; production secret failure, Compose resolution, and Caddy validation also pass.
+- 2026-07-26: panel 54/54 GREEN with all fleet partials covered by single-title/persistent-footer regressions; Composer 133/133.
 
 ### One-line info about last time edited Docs:
-- 2026-07-26: operations documents project-only production secrets, Caddy/pfSense trust, and Composer URL pinning.
+- 2026-07-26: operations documents single-shell/persistent-action modals alongside secrets, Caddy/pfSense trust, URL pinning, and enrollment copy.
 
 ## Part 2: Global
 ### Global Standard Helpers, Shortcuts, Info, etc.:

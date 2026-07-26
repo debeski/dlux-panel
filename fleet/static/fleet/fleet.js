@@ -1,32 +1,39 @@
 (() => {
-    // Click-to-copy for enrollment fields. Delegated on document because the
-    // enrollment token is rendered inside a dynamic modal, whose injected HTML
-    // never runs its own inline scripts.
     document.addEventListener("click", (event) => {
         const btn = event.target.closest("[data-fleet-copy]");
         if (!btn) return;
-        const value = btn.getAttribute("data-fleet-copy");
+        event.preventDefault();
+        const group = btn.closest("[data-fleet-copy-group]");
+        const field = group && group.querySelector("[data-copy-value]");
+        const value = field ? field.value : "";
         const icon = btn.querySelector("[data-copy-icon]");
         const flash = () => {
             if (!icon) return;
-            icon.className = "bi bi-check2 float-end text-success";
+            icon.className = "bi bi-check2 text-success";
             btn.setAttribute("title", btn.getAttribute("data-copied-label") || "");
             setTimeout(() => {
-                icon.className = "bi bi-clipboard float-end";
+                icon.className = "bi bi-clipboard";
                 btn.setAttribute("title", btn.getAttribute("data-copy-label") || "");
             }, 1500);
         };
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(value).then(flash).catch(() => {});
-        } else {
+        const fallback = () => {
             const ta = document.createElement("textarea");
             ta.value = value;
+            ta.setAttribute("readonly", "");
             ta.style.position = "fixed";
             ta.style.opacity = "0";
             document.body.appendChild(ta);
+            ta.focus();
             ta.select();
-            try { document.execCommand("copy"); flash(); } catch (_) {}
+            let copied = false;
+            try { copied = document.execCommand("copy"); } catch (_) {}
             document.body.removeChild(ta);
+            if (copied) flash();
+        };
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(value).then(flash).catch(fallback);
+        } else {
+            fallback();
         }
     });
 

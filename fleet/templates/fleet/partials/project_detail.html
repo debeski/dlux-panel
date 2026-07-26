@@ -1,12 +1,5 @@
-<div class="modal-header border-0 pb-0">
-    <div>
-        <h5 class="modal-title fw-bold mb-0"><i class="bi bi-box me-2"></i> {{ project.name }}</h5>
-        <div class="small text-muted">{{ project.environment }}{% if project.base_url %} · <a href="{{ project.base_url }}" target="_blank" rel="noopener">{{ project.base_url }}</a>{% endif %}</div>
-    </div>
-    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-</div>
-
-<div class="modal-body p-4">
+<div class="p-2">
+    <div class="small text-muted mb-3">{{ project.environment }}{% if project.base_url %} · <a href="{{ project.base_url }}" target="_blank" rel="noopener">{{ project.base_url }}</a>{% endif %}</div>
     <div class="row g-3 mb-4">
         <div class="col-md-6">
             <h6 class="text-uppercase small text-muted">{{ DLUX_STRINGS.fleet_composer_agent|default:'Composer agent' }}</h6>

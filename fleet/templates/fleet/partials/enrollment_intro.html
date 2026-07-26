@@ -1,14 +1,9 @@
-<div class="modal-header border-0 pb-0">
-    <h5 class="modal-title fw-bold"><i class="bi bi-key me-2"></i> {{ DLUX_STRINGS.fleet_enroll_title|default:'Enroll' }} {{ project.name }}</h5>
-    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-</div>
-
-<div class="modal-body p-4">
+<div class="p-2">
     <p>{{ DLUX_STRINGS.fleet_enroll_intro|default:'Generating a token issues a one-use pairing secret that expires in 15 minutes and is shown only once. The panel stores only its hash.' }}</p>
     <p class="text-muted small mb-4">{{ DLUX_STRINGS.fleet_enroll_intro2|default:"You will paste the control-panel URL and token into the target app's DjangoLux → Control Panel tile. No redeploy is required." }}</p>
     <form method="post" action="{{ action_url }}">
         {% csrf_token %}
-        <div class="dlux-modal-form-actions d-flex justify-content-end gap-2">
+        <div class="dlux-modal-form-actions d-flex justify-content-end gap-2" data-dlux-modal-footer>
             <button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">{{ DLUX_STRINGS.fleet_cancel|default:'Cancel' }}</button>
             <button type="submit" class="btn btn-primary rounded-pill">{{ DLUX_STRINGS.fleet_enroll_generate|default:'Generate token' }}</button>
         </div>

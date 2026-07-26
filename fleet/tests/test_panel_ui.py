@@ -1,6 +1,7 @@
 """The single-page panel: Dlux table, context-menu actions, and modal endpoints."""
 
 import json
+from pathlib import Path
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
@@ -35,6 +36,7 @@ class PanelUITests(TestCase):
         body = response.content.decode()
         self.assertIn("dlux-data-table", body)
         self.assertIn('data-dlux-context="true"', body)
+        self.assertIn("/static/fleet/fleet.js?v=0.2.2", body)
         self.assertIn("Forms", body)
 
     def test_overview_offers_modal_triggers_instead_of_form_pages(self):
@@ -42,6 +44,34 @@ class PanelUITests(TestCase):
         self.assertIn("data-dynamic-modal", body)
         self.assertIn(reverse("fleet:project_modal_add"), body)
         self.assertIn(reverse("fleet:batch_add"), body)
+
+    def test_fleet_ajax_partials_use_the_shared_modal_shell(self):
+        partials = Path(__file__).resolve().parents[1] / "templates" / "fleet" / "partials"
+        names = (
+            "action_form.html",
+            "batch_detail.html",
+            "batch_form.html",
+            "confirm.html",
+            "enrollment_intro.html",
+            "enrollment_token.html",
+            "project_detail.html",
+        )
+        for name in names:
+            contents = (partials / name).read_text(encoding="utf-8")
+            self.assertNotIn('class="modal-header', contents, name)
+            self.assertNotIn('class="modal-body', contents, name)
+            self.assertNotIn('class="modal-footer', contents, name)
+
+        action_partials = (
+            "action_form.html",
+            "batch_form.html",
+            "confirm.html",
+            "enrollment_intro.html",
+            "enrollment_token.html",
+        )
+        for name in action_partials:
+            contents = (partials / name).read_text(encoding="utf-8")
+            self.assertIn("data-dlux-modal-footer", contents, name)
 
     def test_add_edit_modal_is_form_only(self):
         add = self.client.get(reverse("fleet:project_modal_add"), **AJAX)
@@ -82,7 +112,11 @@ class PanelUITests(TestCase):
         modal = self.client.get(url, **AJAX)
         self.assertEqual(modal.status_code, 200)
         self.assertEqual(modal["Content-Type"], "application/json")
-        self.assertIn("modal-body", json.loads(modal.content)["html"])
+        modal_html = json.loads(modal.content)["html"]
+        self.assertIn("DLUX snapshot", modal_html)
+        self.assertNotIn("modal-header", modal_html)
+        self.assertNotIn("modal-body", modal_html)
+        self.assertNotIn("modal-footer", modal_html)
 
         page = self.client.get(url)
         self.assertEqual(page.status_code, 200)
@@ -94,6 +128,8 @@ class PanelUITests(TestCase):
         form = json.loads(self.client.get(url, **AJAX).content)["html"]
         self.assertIn("backup_mode", form)
         self.assertIn(url, form)
+        self.assertIn("data-dlux-modal-footer", form)
+        self.assertNotIn("modal-header", form)
 
         queued = self.client.post(url, {"backup_mode": "data"}, **AJAX)
         payload = json.loads(queued.content)
@@ -123,11 +159,13 @@ class PanelUITests(TestCase):
         self.assertIn("Pairing token", html)
         self.assertIn("Control panel URL", html)
 
-    def test_enrollment_values_are_click_to_copy(self):
+    def test_enrollment_values_are_selectable_and_click_to_copy(self):
         url = reverse("fleet:project_enrollment", args=[self.project.pk])
         html = json.loads(self.client.post(url, **AJAX).content)["html"]
-        # Both the control URL and the token expose a copy trigger.
-        self.assertEqual(html.count("data-fleet-copy="), 2)
+        self.assertEqual(html.count("data-fleet-copy-group"), 2)
+        self.assertEqual(html.count("data-fleet-copy\n"), 2)
+        self.assertEqual(html.count("data-copy-value readonly"), 2)
+        self.assertNotIn(" disabled", html)
 
     def test_panel_renders_in_arabic(self):
         settings = SystemSettings.load()

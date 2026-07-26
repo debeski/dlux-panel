@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "version": "0.2.1",
-  "summary": "Adds strict configurable front-proxy trust and fails closed when required production secrets are missing.",
+  "version": "0.2.2",
+  "summary": "Streamlines fleet dynamic modals with one title, persistent actions, and reliable selectable enrollment values.",
   "highlights": [
-    "Caddy validates forwarded client data against configured proxy sources using strict right-to-left parsing.",
-    "Production startup now requires explicit Django, database, and administrator secrets."
+    "Enrollment values remain selectable and copy reliably across repeated modal openings.",
+    "Fleet modals use the shared title and keep submit, cancel, and Done actions visible in the footer."
   ],
-  "release_url": "https://github.com/debeski/dlux-panel/releases/tag/v0.2.1"
+  "release_url": "https://github.com/debeski/dlux-panel/releases/tag/v0.2.2"
 }

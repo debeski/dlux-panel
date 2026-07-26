@@ -139,6 +139,7 @@ class FleetOverviewView(
             .order_by("-created_at")[:20]
         )
         context["open_project"] = self._deep_linked_project()
+        context["fleet_static_version"] = settings.DLUX_APP_VERSION
 
         layout = get_fleet_layout(self.request)
         context["fleet_layout"] = layout

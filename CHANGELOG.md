@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.2.2
+- **Single-Title Fleet Modals**: Removed nested Bootstrap modal chrome from all fleet AJAX partials and marked submit/cancel/Done action bars for DjangoLux's persistent footer.
+- **Reliable Enrollment Copy**: Replaced button-like enrollment values with selectable read-only inputs and added clipboard fallback when the modern API is unavailable or rejected.
+
 ## v0.2.1
 - **Strict Front-Proxy Trust**: Added configurable `CADDY_TRUSTED_PROXIES` plus right-to-left strict parsing so Caddy accepts forwarded client/protocol data only from configured proxy sources.
 - **Required Production Secrets**: Removed Compose placeholder credentials, made missing production Django/database secrets fatal, and documented mode `0600` for `.secrets/.env`.

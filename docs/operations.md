@@ -16,6 +16,10 @@ This project requires `DJANGO_SECRET_KEY`, `POSTGRES_PASSWORD`, and `ADMIN_PASS`
 
 Create a `ManagedProject` in its native DLUX scope, then create an enrollment token from its project page. Tokens are single-use and expire after 15 minutes. The displayed control URL comes from the panel's canonical `BASE_URL`; production must set it to the public HTTPS origin, such as `https://dlux.eidc.gov.ly`, so an internal HTTP proxy hop cannot produce an invalid pairing URL. Paste that URL and token into the target application's `/sys/control-panel/` page. The resulting random bearer secret persists in that project's dedicated agent-state volume; the panel stores only its hash.
 
+The shown control URL and token are selectable read-only inputs. Their copy buttons use the browser Clipboard API and fall back to a temporary selection when that API is unavailable or rejects the write.
+
+Fleet AJAX partials provide body content only; the shared DjangoLux dynamic-modal shell owns the single title, close control, scrolling body, and persistent footer. Submit, cancel, generate-token, and Done action bars use `data-dlux-modal-footer`, so they remain visible while long forms and operation tables scroll.
+
 Credential rotation is issued as a typed command. The server stages a pending hash, the agent persists the new secret in SQLite, confirms with it, and only then promotes it and revokes the old credential. Interrupted confirmations replay from durable state. Composer 1.2.7 pins the normalized control URL after enrollment and rejects redirects; changing panels requires revocation/re-enrollment or an explicit local reset of the agent-state volume. Revocation blocks central traffic immediately without disabling local DLUX updates.
 
 ## Updates, backups, and restart

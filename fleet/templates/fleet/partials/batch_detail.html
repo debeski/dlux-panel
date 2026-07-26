@@ -1,16 +1,9 @@
-<div class="modal-header border-0 pb-0">
-    <div>
-        <h5 class="modal-title fw-bold mb-0"><i class="bi bi-layers me-2"></i> {{ batch.name }}</h5>
-        <div class="small text-muted">
-            <span class="badge text-bg-secondary">{{ batch.state }}</span>
-            · concurrency {{ batch.concurrency }}
-            · {% if batch.continue_on_failure %}continue after failure{% else %}halt after first failure{% endif %}
-        </div>
+<div class="p-2">
+    <div class="small text-muted mb-3">
+        <span class="badge text-bg-secondary">{{ batch.state }}</span>
+        · concurrency {{ batch.concurrency }}
+        · {% if batch.continue_on_failure %}continue after failure{% else %}halt after first failure{% endif %}
     </div>
-    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-</div>
-
-<div class="modal-body p-4">
     <div class="table-responsive">
         <table class="table table-sm align-middle mb-0">
             <thead><tr><th>#</th><th>{{ DLUX_STRINGS.fleet_batch_member|default:'Project' }}</th><th>{{ DLUX_STRINGS.fleet_batch_operation|default:'Operation' }}</th><th>{{ DLUX_STRINGS.fleet_op_state|default:'State' }}</th></tr></thead>

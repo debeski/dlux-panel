@@ -69,5 +69,5 @@
 
 {% block scripts %}
     {{ block.super }}
-    <script src="{% static 'fleet/fleet.js' %}" defer></script>
+    <script src="{% static 'fleet/fleet.js' %}?v={{ fleet_static_version }}" defer></script>
 {% endblock %}

@@ -1,35 +1,40 @@
-<div class="modal-header border-0 pb-0">
-    <h5 class="modal-title fw-bold text-warning-emphasis"><i class="bi bi-key-fill me-2"></i> {{ DLUX_STRINGS.fleet_enroll_token_title|default:'Pairing token' }} — {{ project.name }}</h5>
-    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-</div>
-
-<div class="modal-body p-4" data-fleet-enrollment>
+<div class="p-2" data-fleet-enrollment>
     <div class="alert alert-warning py-2 small">{{ DLUX_STRINGS.fleet_enroll_shown_once|default:'Shown once. Expires' }} {{ expires_at|date:"Y-m-d H:i:s T" }}.</div>
 
     <label class="form-label fw-semibold mb-1">{{ DLUX_STRINGS.fleet_enroll_control_url|default:'Control panel URL' }}</label>
-    <button type="button" class="fleet-copy w-100 text-start p-3 mb-3 bg-body-tertiary rounded border-0 font-monospace text-break"
-            data-fleet-copy="{{ control_url }}"
-            data-copy-label="{{ DLUX_STRINGS.fleet_enroll_copy|default:'Copy' }}"
-            data-copied-label="{{ DLUX_STRINGS.fleet_enroll_copied|default:'Copied' }}"
-            title="{{ DLUX_STRINGS.fleet_enroll_copy|default:'Copy' }}">
-        <span data-copy-value>{{ control_url }}</span>
-        <i class="bi bi-clipboard float-end" data-copy-icon></i>
-    </button>
+    <div class="input-group mb-3" data-fleet-copy-group>
+        <input type="text" class="form-control bg-body font-monospace" value="{{ control_url }}"
+               data-copy-value readonly spellcheck="false"
+               aria-label="{{ DLUX_STRINGS.fleet_enroll_control_url|default:'Control panel URL' }}">
+        <button type="button" class="btn btn-outline-secondary"
+                data-fleet-copy
+                data-copy-label="{{ DLUX_STRINGS.fleet_enroll_copy|default:'Copy' }}"
+                data-copied-label="{{ DLUX_STRINGS.fleet_enroll_copied|default:'Copied' }}"
+                title="{{ DLUX_STRINGS.fleet_enroll_copy|default:'Copy' }}">
+            <i class="bi bi-clipboard" data-copy-icon></i>
+            <span class="visually-hidden">{{ DLUX_STRINGS.fleet_enroll_copy|default:'Copy' }}</span>
+        </button>
+    </div>
 
     <label class="form-label fw-semibold mb-1">{{ DLUX_STRINGS.fleet_enroll_token|default:'Pairing token' }}</label>
-    <button type="button" class="fleet-copy w-100 text-start p-3 mb-3 bg-body-tertiary rounded border-0 font-monospace text-break"
-            data-fleet-copy="{{ token }}"
-            data-copy-label="{{ DLUX_STRINGS.fleet_enroll_copy|default:'Copy' }}"
-            data-copied-label="{{ DLUX_STRINGS.fleet_enroll_copied|default:'Copied' }}"
-            title="{{ DLUX_STRINGS.fleet_enroll_copy|default:'Copy' }}">
-        <span data-copy-value>{{ token }}</span>
-        <i class="bi bi-clipboard float-end" data-copy-icon></i>
-    </button>
+    <div class="input-group mb-3" data-fleet-copy-group>
+        <input type="text" class="form-control bg-body font-monospace" value="{{ token }}"
+               data-copy-value readonly spellcheck="false"
+               aria-label="{{ DLUX_STRINGS.fleet_enroll_token|default:'Pairing token' }}">
+        <button type="button" class="btn btn-outline-secondary"
+                data-fleet-copy
+                data-copy-label="{{ DLUX_STRINGS.fleet_enroll_copy|default:'Copy' }}"
+                data-copied-label="{{ DLUX_STRINGS.fleet_enroll_copied|default:'Copied' }}"
+                title="{{ DLUX_STRINGS.fleet_enroll_copy|default:'Copy' }}">
+            <i class="bi bi-clipboard" data-copy-icon></i>
+            <span class="visually-hidden">{{ DLUX_STRINGS.fleet_enroll_copy|default:'Copy' }}</span>
+        </button>
+    </div>
 
     <p class="mb-1 small">{{ DLUX_STRINGS.fleet_enroll_ui_hint|default:"Pair from the app's UI (no redeploy): open DjangoLux → Control Panel in the target app, paste both values, and save. The agent enrols over its local bridge and the tile turns Connected." }}</p>
     <p class="mb-0 text-muted small">{{ DLUX_STRINGS.fleet_enroll_headless|default:'Headless fallback: set COMPOSER_CONTROL_URL and COMPOSER_ENROLLMENT_TOKEN on the composer-agent service before first boot.' }}</p>
 
-    <div class="dlux-modal-form-actions d-flex justify-content-end">
+    <div class="dlux-modal-form-actions d-flex justify-content-end" data-dlux-modal-footer>
         <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal" data-fleet-reload>{{ DLUX_STRINGS.fleet_done|default:'Done' }}</button>
     </div>
 </div>
