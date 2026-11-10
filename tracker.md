@@ -2,7 +2,7 @@
 
 ## Part 1: Project Related
 ### Current Verified Snapshot:
-- Dedicated DjangoLux fleet control panel (v0.2.1 released; v0.2.2 pending, DjangoLux 1.5.9) has native scoped fleet UI and its own generated `composer-agent`.
+- Dedicated DjangoLux fleet control panel (v0.2.2 tagged; v0.2.3 on branch `0.2/worker_restart_service`, unmerged; DjangoLux 1.5.9) has native scoped fleet UI and its own generated `composer-agent`.
 - Schema-v1 API runs under Uvicorn/ASGI and implements hashed enrollment/auth, long polls, monotonic events, snapshots, local reconciliation, capabilities, rotation, and revocation.
 - Typed actions cover DLUX image update/backup creation, safe restart, and audited recovery; remote restore/arbitrary execution are absent.
 - DLUX provides configurable human-login/OTP throttles and mandatory TOTP; HAProxy now sets X-Forwarded-Proto/For across the deployed projects.
@@ -36,12 +36,14 @@
   - [ ] Enroll and self-update the control panel after initial administrative setup.
   - [ ] Pilot one noncritical project before Decrees and Trademarks.
 - **Priority 2:**
+  - [ ] Owner OK to merge `0.2/worker_restart_service` (v0.2.3, `worker` restart choice for DjangoLux 1.16 stacks); not pushed.
   - [ ] Pin forms to DjangoLux 1.5.9 and pair it via `/sys/control-panel/`.
   - [ ] Export `ENV DLUX_BAKED_VERSION` in Dockerfile(s) so runtime `get_baked_version()` stops reporting the activated version as baked.
   - [ ] Enroll the control panel's own agent in staging.
   - [ ] Add separate SSO project after the fleet deployment path stabilizes.
   - [ ] Browser-validate single-title fleet modals and persistent action footers; the in-app browser had no active session.
 - **Completed Recently:**
+  - [x] v0.2.3 (branch only): safe restart offers `worker` beside `celery`; a service outside the agent's `COMPOSER_AGENT_RESTART_SERVICES` fails with Composer's reason in the operation history.
   - [x] Fleet AJAX partials now rely on one DjangoLux shell title/body/footer and explicitly pin submit/cancel/Done action bars in the persistent footer.
   - [x] Composer v1.2.8 coalesces unsent snapshots to the latest value and collapses existing backlogs at startup.
   - [x] Replaced button-like enrollment values with selectable read-only inputs and made clipboard rejection fall back to legacy copy.
@@ -61,10 +63,10 @@
   - [x] Prepared Dlux 1.5.6 visible pairing validation and Archive v1.1.7 with the corrected target pin.
 
 ### One-line info about last verified Tests:
-- 2026-07-26: panel 54/54 GREEN with all fleet partials covered by single-title/persistent-footer regressions; Composer 133/133.
+- 2026-11-11: panel 57/57 GREEN on DjangoLux v1.5.9 source (`PYTHONPATH=<v1.5.9 export>`); `DEBUG_STATUS=False` now also needs `DJANGO_SECRET_KEY` and `POSTGRES_PASSWORD` test values.
 
 ### One-line info about last time edited Docs:
-- 2026-07-26: operations documents single-shell/persistent-action modals alongside secrets, Caddy/pfSense trust, URL pinning, and enrollment copy.
+- 2026-11-11: operations documents the `worker`/`celery` restart choices and the agent's allowlist refusal.
 
 ## Part 2: Global
 ### Global Standard Helpers, Shortcuts, Info, etc.:

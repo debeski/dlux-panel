@@ -36,7 +36,7 @@ class PanelUITests(TestCase):
         body = response.content.decode()
         self.assertIn("dlux-data-table", body)
         self.assertIn('data-dlux-context="true"', body)
-        self.assertIn("/static/fleet/fleet.js?v=0.2.2", body)
+        self.assertIn("/static/fleet/fleet.js?v=0.2.3", body)
         self.assertIn("Forms", body)
 
     def test_overview_offers_modal_triggers_instead_of_form_pages(self):
@@ -138,6 +138,25 @@ class PanelUITests(TestCase):
         self.assertEqual(
             FleetOperation.objects.get(project=self.project).action, "dlux.image_update"
         )
+
+    def test_restart_modal_offers_worker_and_keeps_celery(self):
+        url = reverse("fleet:project_restart", args=[self.project.pk])
+        html = json.loads(self.client.get(url, **AJAX).content)["html"]
+        for service in ("web", "worker", "celery", "smtp-relay", "caddy"):
+            self.assertIn(f'value="{service}"', html)
+        self.assertIn("restart allowlist", html)
+
+        queued = self.client.post(url, {"service": "worker"}, **AJAX)
+        self.assertTrue(json.loads(queued.content)["success"])
+        operation = FleetOperation.objects.get(project=self.project)
+        self.assertEqual(operation.action, "composer.restart")
+        self.assertEqual(operation.payload, {"service": "worker"})
+
+    def test_restart_modal_rejects_an_unlisted_service(self):
+        url = reverse("fleet:project_restart", args=[self.project.pk])
+        payload = json.loads(self.client.post(url, {"service": "db"}, **AJAX).content)
+        self.assertNotIn("success", payload)
+        self.assertFalse(FleetOperation.objects.exists())
 
     def test_invalid_action_post_rerenders_the_modal_form(self):
         url = reverse("fleet:project_update", args=[self.project.pk])

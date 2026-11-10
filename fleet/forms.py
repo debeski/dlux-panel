@@ -57,9 +57,16 @@ class RestartForm(StyledFormMixin, forms.Form):
         self.fields["service"].choices = (
             ("", s.get("fleet_restart_all", "All allowlisted application services")),
             ("web", "Web"),
+            ("worker", "Worker"),
             ("celery", "Celery"),
             ("smtp-relay", "SMTP relay"),
             ("caddy", "Caddy"),
+        )
+        self.fields["service"].help_text = s.get(
+            "fleet_restart_service_help",
+            "Worker runs DjangoLux tasks from DjangoLux 1.16 on; Celery runs project tasks, or "
+            "DjangoLux tasks on older stacks. A service outside the project's restart allowlist "
+            "fails with the agent's reason.",
         )
 
 
