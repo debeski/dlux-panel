@@ -36,7 +36,7 @@
   - [ ] Enroll and self-update the control panel after initial administrative setup.
   - [ ] Pilot one noncritical project before Decrees and Trademarks.
 - **Priority 2:**
-  - [ ] Owner OK to merge `0.2/worker_restart_service` (v0.2.3, `worker` restart choice for DjangoLux 1.16 stacks); not pushed.
+  - [ ] Owner OK to merge debeski/dlux-panel#1 (`0.2/worker_restart_service`, v0.2.3, `worker` restart choice for DjangoLux 1.16 stacks); commit the local `main` work-in-progress first.
   - [ ] Pin forms to DjangoLux 1.5.9 and pair it via `/sys/control-panel/`.
   - [ ] Export `ENV DLUX_BAKED_VERSION` in Dockerfile(s) so runtime `get_baked_version()` stops reporting the activated version as baked.
   - [ ] Enroll the control panel's own agent in staging.
