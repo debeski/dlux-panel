@@ -30,6 +30,8 @@ Central backup creation supports data or full backups. The project-local DLUX ba
 
 Safe restart accepts the whole generated stateless allowlist or one allowlisted service. Database, Redis, backup, agent, socket proxy, and other stateful services stay protected.
 
+The single-service choices are `web`, `worker`, `celery`, `smtp-relay`, and `caddy`. `worker` runs DjangoLux's tasks on stack schema 5 (DjangoLux 1.16 with Composer 1.10); `celery` runs a project's own Celery tasks, or DjangoLux's tasks on older stacks. The panel does not see each project's `COMPOSER_AGENT_RESTART_SERVICES`, so it queues any listed service: the project's agent refuses one outside its allowlist, and the operation fails with the agent's `exit_code` and `error` (for example `Service 'worker' is not in COMPOSER_AGENT_RESTART_SERVICES.`), shown in the project's operation history.
+
 ## Batches and break glass
 
 Batches default to concurrency one and are capped at three. Dispatch follows member order, and unstarted members are cancelled after the first failure unless continue-on-failure was selected.

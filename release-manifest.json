@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "version": "0.2.2",
-  "summary": "Streamlines fleet dynamic modals with one title, persistent actions, and reliable selectable enrollment values.",
+  "version": "0.2.3",
+  "summary": "Adds the DjangoLux worker service to the fleet's safe-restart choices.",
   "highlights": [
-    "Enrollment values remain selectable and copy reliably across repeated modal openings.",
-    "Fleet modals use the shared title and keep submit, cancel, and Done actions visible in the footer."
+    "Safe restart can target worker, the service that runs DjangoLux tasks on DjangoLux 1.16 stacks; Celery stays for project tasks and older stacks.",
+    "Restarting a service outside a project's restart allowlist fails with the agent's reason in the operation history."
   ],
-  "release_url": "https://github.com/debeski/dlux-panel/releases/tag/v0.2.2"
+  "release_url": "https://github.com/debeski/dlux-panel/releases/tag/v0.2.3"
 }

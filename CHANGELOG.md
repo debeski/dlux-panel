@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.2.3
+- **Worker Restart Choice**: `RestartForm` (`fleet/forms.py`) offers `worker`, the service that runs DjangoLux tasks on stack schema 5 (DjangoLux 1.16 with Composer 1.10), beside `web`, `celery`, `smtp-relay` and `caddy`; `celery` stays for a project's own Celery and for older stacks. The new en/ar `fleet_restart_service_help` text explains the choice and that the project's agent refuses a service outside its `COMPOSER_AGENT_RESTART_SERVICES`, failing the `composer.restart` operation with the agent's `exit_code` and `error` in the project's operation history.
+
 ## v0.2.2
 - **Single-Title Fleet Modals**: Removed nested Bootstrap modal chrome from all fleet AJAX partials and marked submit/cancel/Done action bars for DjangoLux's persistent footer.
 - **Reliable Enrollment Copy**: Replaced button-like enrollment values with selectable read-only inputs and added clipboard fallback when the modern API is unavailable or rejected.

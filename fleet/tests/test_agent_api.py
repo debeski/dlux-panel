@@ -284,6 +284,35 @@ class AgentApiTests(TestCase):
                 {"backup_mode": "data", "command": "id"},
             )
 
+    def test_restart_of_a_service_outside_the_allowlist_fails_with_the_agent_reason(self):
+        self.enroll()
+        operation = queue_operation(self.project, "composer.restart", {"service": "worker"})
+        command = self.client.get("/api/agent/v1/commands/next/?wait=0", **self.headers).json()["command"]
+        self.assertEqual(command["payload"], {"service": "worker"})
+        reason = "Service 'worker' is not in COMPOSER_AGENT_RESTART_SERVICES."
+        self.assertEqual(self.event(operation, 1, "accepted").status_code, 201)
+        self.assertEqual(self.event(operation, 2, "running").status_code, 201)
+        self.assertEqual(
+            self.event(operation, 3, "failed", {"exit_code": 2, "error": reason}).status_code, 201
+        )
+        operation.refresh_from_db()
+        self.assertEqual(operation.state, "failed")
+        self.assertEqual(operation.result, {"exit_code": 2, "error": reason})
+
+        system = SystemSettings.load()
+        system.is_configured = True
+        system.save(update_fields=("is_configured",))
+        viewer = Client()
+        viewer.force_login(
+            get_user_model().objects.create_superuser(
+                username="ops", password="ops-pass", email="ops@example.com"
+            )
+        )
+        detail = viewer.get(
+            f"/fleet/projects/{self.project.pk}/", HTTP_X_REQUESTED_WITH="XMLHttpRequest"
+        ).json()["html"]
+        self.assertIn("is not in COMPOSER_AGENT_RESTART_SERVICES.", detail)
+
     def test_backup_creation_is_typed_and_remote_restore_is_rejected(self):
         self.enroll()
         operation = queue_operation(self.project, "dlux.backup.create", {"backup_mode": "full"})
